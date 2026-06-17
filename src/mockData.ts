@@ -389,3 +389,96 @@ export const SCHEDULE: EventScheduleItem[] = [
     icon: "PartyPopper"
   }
 ];
+
+// Candidate pool for Luna's teammate matching (mock stand-in for the future
+// Supabase profiles table). Mirrors the 6 TEAMMATES plus a few extras so results vary.
+export interface PoolProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+  linkedin: string;
+  currentRole: 'Developer' | 'Designer' | 'Business / Pitch';
+  desiredRole: string;
+  domain: string;
+  skills: string[];
+  interests: string[];
+  commitment: string;
+  status: string;
+  bio: string;
+}
+
+export const MOCK_PROFILES: PoolProfile[] = [
+  {
+    id: "t1", name: "Alex Rivera", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alex",
+    email: "alex.rivera@example.com", linkedin: "https://linkedin.com/in/alex-rivera-hack",
+    currentRole: "Developer", desiredRole: "Designer", domain: "AI agents",
+    skills: ["React", "TypeScript", "Node.js", "Express"],
+    interests: ["LLMs", "Full-stack", "Developer tools"],
+    commitment: "Serious / aiming to win", status: "Looking for a team",
+    bio: "Fullstack dev who loves wiring LLM APIs into beautiful web apps."
+  },
+  {
+    id: "t2", name: "Susan Jones", avatar: "https://api.dicebear.com/7.x/lorelei/svg?seed=Susan",
+    email: "susan@example.com", linkedin: "https://linkedin.com/in/susan-jones-ux",
+    currentRole: "Designer", desiredRole: "Developer", domain: "Design systems",
+    skills: ["Figma", "Prototyping", "Branding", "User Testing"],
+    interests: ["Micro-interactions", "Pastel UI", "Accessibility"],
+    commitment: "Serious / aiming to win", status: "Looking for a team",
+    bio: "Senior UI/UX designer obsessed with seamless, gorgeous user journeys."
+  },
+  {
+    id: "t3", name: "Minh Nguyen", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Minh",
+    email: "minh.n@example.com", linkedin: "https://linkedin.com/in/minh-nguyen-ai",
+    currentRole: "Developer", desiredRole: "Designer", domain: "AI agents",
+    skills: ["Python", "PyTorch", "Gemini API", "FastAPI"],
+    interests: ["AI agents", "RAG", "Vector search"],
+    commitment: "All-in 🚀", status: "Looking for a team",
+    bio: "AI/Python engineer building smart agents — needs a React frontend partner."
+  },
+  {
+    id: "t4", name: "Chloe Chen", avatar: "https://api.dicebear.com/7.x/open-peeps/svg?seed=Chloe",
+    email: "chloe.c@example.com", linkedin: "https://linkedin.com/in/chloe-chen-biz",
+    currentRole: "Business / Pitch", desiredRole: "Developer", domain: "FinTech",
+    skills: ["Market Research", "Pitching", "Financial Modeling", "SaaS"],
+    interests: ["Storytelling", "Go-to-market", "Unit economics"],
+    commitment: "Serious / aiming to win", status: "Have a team, open to more",
+    bio: "Product/growth PM and 3x hackathon winner who turns code into a venture pitch."
+  },
+  {
+    id: "t5", name: "Sarah Jenkins", avatar: "https://api.dicebear.com/7.x/lorelei/svg?seed=Sarah",
+    email: "sarah.jenkins@example.com", linkedin: "https://linkedin.com/in/sarah-j-design",
+    currentRole: "Designer", desiredRole: "Developer", domain: "Interactive web",
+    skills: ["Figma", "Motion Design", "3D Art", "Affinity Designer"],
+    interests: ["3D web", "CSS animation", "Creative coding"],
+    commitment: "Casual / for fun", status: "Just exploring",
+    bio: "Creative director blending 3D and smooth CSS into web storytelling."
+  },
+  {
+    id: "t6", name: "Marcus Aurelius", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Marcus",
+    email: "marcus@example.com", linkedin: "https://linkedin.com/in/marcus-native",
+    currentRole: "Developer", desiredRole: "Business / Pitch", domain: "Mobile games",
+    skills: ["React Native", "Flutter", "iOS", "Android"],
+    interests: ["Cross-platform", "Mobile games", "Native performance"],
+    commitment: "All-in 🚀", status: "Looking for a team",
+    bio: "Ex-Meta engineer crafting beautiful cross-platform mobile experiences."
+  },
+  {
+    id: "t7", name: "Priya Sharma", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Priya",
+    email: "priya.s@example.com", linkedin: "https://linkedin.com/in/priya-sharma-web3",
+    currentRole: "Developer", desiredRole: "Anyone complementary", domain: "Web3",
+    skills: ["Solidity", "TypeScript", "Next.js", "Smart Contracts"],
+    interests: ["Web3", "DeFi", "Zero-knowledge"],
+    commitment: "Serious / aiming to win", status: "Looking for a team",
+    bio: "Web3 engineer shipping on-chain apps; loves a strong design + pitch duo."
+  },
+  {
+    id: "t8", name: "Diego Lopez", avatar: "https://api.dicebear.com/7.x/open-peeps/svg?seed=Diego",
+    email: "diego.l@example.com", linkedin: "https://linkedin.com/in/diego-lopez-growth",
+    currentRole: "Business / Pitch", desiredRole: "Designer", domain: "AI agents",
+    skills: ["Pitching", "Growth", "User Research", "Notion"],
+    interests: ["AI agents", "Storytelling", "B2B SaaS"],
+    commitment: "Serious / aiming to win", status: "Looking for a team",
+    bio: "Growth-minded pitcher who frames AI prototypes as fundable products."
+  }
+];

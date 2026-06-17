@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
-import { AuthUser, GOOGLE_CLIENT_ID, verifyGoogleCredential } from '../auth';
+import { AuthUser, SUPABASE_ENABLED, signInWithGoogle, makeGuest } from '../auth';
 
 interface LoginScreenProps {
   onLogin: (user: AuthUser) => void;
@@ -14,68 +14,18 @@ const AGENTS = [
 ];
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const googleBtnRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Initialize Google Identity Services once the script + client id are available.
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-
-    let cancelled = false;
-    const init = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id || !googleBtnRef.current || cancelled) return false;
-
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (response: { credential: string }) => {
-          setLoading(true);
-          setError(null);
-          try {
-            const user = await verifyGoogleCredential(response.credential);
-            onLogin(user);
-          } catch (err: any) {
-            setError(err.message || 'Sign-in failed. Please try again.');
-          } finally {
-            setLoading(false);
-          }
-        },
-      });
-
-      g.accounts.id.renderButton(googleBtnRef.current, {
-        theme: 'outline',
-        size: 'large',
-        shape: 'pill',
-        text: 'continue_with',
-        width: 280,
-      });
-      return true;
-    };
-
-    if (!init()) {
-      // GIS script may still be loading — poll briefly until ready.
-      const timer = setInterval(() => {
-        if (init()) clearInterval(timer);
-      }, 200);
-      return () => {
-        cancelled = true;
-        clearInterval(timer);
-      };
+  const handleGoogle = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await signInWithGoogle(); // full-page redirect to Google, then back to the app
+    } catch (err: any) {
+      setError(err.message || 'Sign-in failed. Please try again.');
+      setLoading(false);
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [onLogin]);
-
-  const continueAsGuest = () => {
-    onLogin({
-      sub: 'guest-' + Math.random().toString(36).slice(2),
-      name: 'Guest Hacker',
-      email: '',
-      picture: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Guest',
-      guest: true,
-    });
   };
 
   return (
@@ -121,25 +71,31 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           Sign in to meet <strong>Luna</strong>, <strong>Orbit</strong> &amp; <strong>Sage</strong> — your three cute AI agents for the hackathon. 🌷
         </p>
 
-        {/* Google Sign-In */}
+        {/* Sign-in */}
         <div className="mt-7 flex flex-col items-center gap-3">
-          {GOOGLE_CLIENT_ID ? (
-            <div ref={googleBtnRef} className="min-h-[44px] flex items-center justify-center" />
+          {SUPABASE_ENABLED ? (
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={loading}
+              className="w-[280px] flex items-center justify-center gap-2.5 py-2.5 px-5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold shadow-sm active:scale-95 transition-all disabled:opacity-60"
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="w-5 h-5" />
+              {loading ? 'Redirecting…' : 'Continue with Google'}
+            </button>
           ) : (
             <div className="text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200/60 rounded-2xl px-4 py-2.5 leading-relaxed">
-              Google Sign-In is not configured yet. Set <code className="font-mono font-bold">VITE_GOOGLE_CLIENT_ID</code> in your <code className="font-mono font-bold">.env</code> to enable it.
+              Supabase Auth is not configured yet. Set <code className="font-mono font-bold">VITE_SUPABASE_URL</code> and{' '}
+              <code className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</code> in your <code className="font-mono font-bold">.env</code> to enable Google sign-in.
             </div>
           )}
 
-          {loading && (
-            <span className="text-xs text-violet-500 font-bold animate-pulse">Verifying your Google account…</span>
-          )}
           {error && <span className="text-xs text-rose-500 font-semibold">{error}</span>}
 
           {/* Guest fallback so the demo always works */}
           <button
             type="button"
-            onClick={continueAsGuest}
+            onClick={() => onLogin(makeGuest())}
             className="mt-1 group flex items-center gap-1.5 py-2.5 px-5 rounded-full bg-gradient-to-r from-pink-400 via-violet-400 to-teal-400 hover:brightness-105 text-white text-xs font-bold shadow-md shadow-violet-300/40 active:scale-95 transition-all"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -150,7 +106,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         <p className="mt-6 flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-medium">
           <ShieldCheck className="w-3.5 h-3.5" />
-          We only read your name, email &amp; avatar.
+          Secured by Supabase Auth · we only read your name, email &amp; avatar.
         </p>
       </motion.div>
     </div>
