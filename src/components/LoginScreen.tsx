@@ -86,7 +86,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           ) : (
             <div className="text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200/60 rounded-2xl px-4 py-2.5 leading-relaxed">
               Supabase Auth is not configured yet. Set <code className="font-mono font-bold">VITE_SUPABASE_URL</code> and{' '}
-              <code className="font-mono font-bold">SUPABASE_ANON_KEY</code> in your <code className="font-mono font-bold">.env</code> to enable Google sign-in.
+              <code className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</code> in your <code className="font-mono font-bold">.env</code> to enable Google sign-in.
             </div>
           )}
 
