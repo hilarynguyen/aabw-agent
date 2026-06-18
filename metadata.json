@@ -1,0 +1,6 @@
+{
+  "name": "Hackathon Companion",
+  "description": "A pastel minimalist AI-powered hackathon helper featuring intelligent teammates matching, a logistics copilot, and mentor routing.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

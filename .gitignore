@@ -1,0 +1,43 @@
+coverage/
+*.log
+.env*
+!.env.example
+# Dependencies
+
+node_modules/
+
+ 
+
+# Secrets — TUYỆT ĐỐI không commit
+
+.env
+
+.env.local
+
+.env.*.local
+
+ 
+
+# Build output
+
+dist/
+
+build/
+
+ 
+
+# Logs & OS files
+
+*.log
+
+.DS_Store
+
+ 
+
+# Editor
+
+.vscode/
+
+.idea/
+
+

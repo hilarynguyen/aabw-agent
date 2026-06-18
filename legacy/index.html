@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit - Hackathon Companion Copilot</title>
+  <meta name="description" content="An agentic, browser-based hackathon companion running local Gemini tool calling loops.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-section">
+      <div class="logo-icon">O</div>
+      <h1>ORBIT Hackathon Companion</h1>
+    </div>
+
+    <div class="header-actions">
+      <!-- Status Badge -->
+      <div class="status-badge">
+        <div id="status-dot" class="status-dot simulating"></div>
+        <span id="status-text">Simulation Mode</span>
+      </div>
+
+      <!-- Configure API Key Button -->
+      <button id="config-api-btn" class="btn">
+        <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        API Key Setup
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Grid -->
+  <main class="workspace">
+    
+    <!-- Left Pane: Chat & Agent Loop Graph -->
+    <section class="agent-panel" aria-label="Copilot Conversation">
+      <!-- Agent Flow Diagram -->
+      <div class="agent-flow-container">
+        <div class="flow-title">
+          <span>Agent Loop Execution Flow</span>
+          <span id="loop-state-label" style="color: var(--text-muted); font-size: 0.65rem;">Idle</span>
+        </div>
+        <div class="flow-steps">
+          <div id="step-user" class="flow-step" data-label="User Input" title="User submits a message">💬</div>
+          <div id="step-gemini" class="flow-step" data-label="LLM Parse" title="Gemini analyzes intent and selects tool">🤖</div>
+          <div id="step-tool" class="flow-step" data-label="Tool Exec" title="Local JavaScript tool executing on database">⚙️</div>
+          <div id="step-answer" class="flow-step" data-label="Answer" title="Gemini generates final response">📝</div>
+        </div>
+      </div>
+
+      <!-- Chat Conversation Container -->
+      <div id="chat-messages" class="chat-container">
+        <!-- Welcoming Message will be injected here -->
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="chat-input-area">
+        <form id="chat-form" class="chat-form">
+          <input 
+            type="text" 
+            id="chat-input" 
+            class="chat-input" 
+            placeholder="Ask me: 'What's next?', 'What is for dinner?', 'Where is Room 201?'..." 
+            autocomplete="off"
+            required
+          >
+          <button type="submit" class="chat-send-btn" aria-label="Send message">
+            <svg viewBox="0 0 24 24">
+              <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Setup API Key Modal -->
+  <div id="setup-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Configure Gemini Agent</h2>
+        <button id="modal-close-btn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.4;">
+          Input your Gemini API key to connect to Google's real generative models. This allows full dynamic tool selection, parameter creation, and conversational response capabilities directly from your browser.
+        </p>
+        
+        <div class="form-group">
+          <label for="gemini-api-key">Gemini API Key</label>
+          <input 
+            type="password" 
+            id="gemini-api-key" 
+            class="form-control" 
+            placeholder="AIzaSy..."
+          >
+          <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
+            Don't have a key? Get one for free at <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); text-decoration: none;">Google AI Studio</a>.
+            If left blank, the copilot will run in <strong>Local Simulation Mode</strong>.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-clear-btn" class="btn btn-secondary">Clear Key</button>
+        <button id="modal-save-btn" class="btn">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Scripts -->
+  <script src="database.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
