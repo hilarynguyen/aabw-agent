@@ -49,7 +49,7 @@ The "brain" (AI) runs through a service called **OpenRouter**; user data + the m
 - `npm run legacy:node` — the old Node `server.ts` (superseded by FastAPI; kept for reference).
 - Backend deps: `pip install -r backend/requirements.txt`. Python syntax check: `python -m py_compile backend/*.py backend/routers/*.py`.
 
-Env in root `.env` (loaded by both Vite and the backend): `OPENROUTER_API_KEY` (chat + embeddings, both via OpenRouter), `VITE_SUPABASE_URL` + `SUPABASE_ANON_KEY` (client auth), `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (server: profile storage + pgvector). All clients are **lazy + graceful-degrade**: missing env → the app still boots and the affected route returns 503 / falls back.
+Env in root `.env` (loaded by both Vite and the backend): `OPENROUTER_API_KEY` (chat + embeddings, both via OpenRouter), `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (client auth), `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (server: profile storage + pgvector). All clients are **lazy + graceful-degrade**: missing env → the app still boots and the affected route returns 503 / falls back.
 
 ## Architecture
 
@@ -90,7 +90,7 @@ Flow: the form `POST`s to `/api/profile` (Supabase upsert + OpenRouter Qwen3-Emb
 - `POST /api/match` → `{ userId }` → `{ matches }` (pgvector cosine vs the user's own profile).
 - `POST /api/requirement` → `{ userId, requirement, count? }` → saves the requirement, embeds it, returns `{ matches }` ranked by similarity to that text (powers the Luna page).
 - `POST /api/seed` — seeds the 8 candidate profiles (with embeddings); no-op if present.
-- **Auth = Supabase Auth** (client-side, [src/auth.ts](src/auth.ts)): `supabase.auth.signInWithOAuth({ provider: 'google' })`; supabase-js handles the OAuth redirect + session. The Supabase user `id` (uuid) becomes `profiles.user_id`. App gated behind [src/components/LoginScreen.tsx](src/components/LoginScreen.tsx); a local **guest** mode (no Supabase session) persists in `localStorage`. Client env: `VITE_SUPABASE_URL` + `SUPABASE_ANON_KEY`. The backend `POST /api/auth/google` (GIS verify) is **legacy/unused**.
+- **Auth = Supabase Auth** (client-side, [src/auth.ts](src/auth.ts)): `supabase.auth.signInWithOAuth({ provider: 'google' })`; supabase-js handles the OAuth redirect + session. The Supabase user `id` (uuid) becomes `profiles.user_id`. App gated behind [src/components/LoginScreen.tsx](src/components/LoginScreen.tsx); a local **guest** mode (no Supabase session) persists in `localStorage`. Client env: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`. The backend `POST /api/auth/google` (GIS verify) is **legacy/unused**.
 - `POST /api/reminders/trigger` — mock webhook (logs + echoes). `GET /api/health`.
 - Supabase access is **server-only** (service-role key); `role` column is used instead of the reserved `current_role`. Schema: [supabase/schema.sql](supabase/schema.sql).
 
