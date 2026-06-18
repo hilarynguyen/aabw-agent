@@ -26,7 +26,7 @@ View your app in AI Studio: https://ai.studio/apps/26bd7b71-7fb8-419d-bbbc-c53e5
      overrides: `OPENROUTER_CHAT_MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`),
      `EMBED_MODEL` (default `qwen/qwen3-embedding-8b`), `EMBED_DIM` (default `1024`),
      `OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`).
-   - `VITE_SUPABASE_URL=...` and `VITE_SUPABASE_ANON_KEY=...` (client — enables **Supabase Auth**
+   - `VITE_SUPABASE_URL=...` and `SUPABASE_ANON_KEY=...` (client — enables **Supabase Auth**
      Google sign-in; otherwise use "Continue as Guest"). The anon key is public/client-safe.
    - `SUPABASE_URL=...` and `SUPABASE_SERVICE_ROLE_KEY=...` (server — profile storage + pgvector
      matching; **service role key is server-only, never exposed to the client**)
@@ -62,6 +62,6 @@ always available. Sign out from the user chip in the chat header.
    `https://<project-ref>.supabase.co/auth/v1/callback` to *Authorized redirect URIs*.
 2. **Authentication → URL Configuration** → Site URL `http://localhost:3000` and add it to
    *Redirect URLs* (plus your production URL).
-3. Put `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (Settings → API) in `.env`.
+3. Put `VITE_SUPABASE_URL` + `SUPABASE_ANON_KEY` (Settings → API) in `.env`.
 
 The legacy `POST /api/auth/google` (GIS token verification) is no longer used by the client.
