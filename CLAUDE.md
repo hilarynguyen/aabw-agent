@@ -4,23 +4,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-"Hackathon Companion" — a single-page React app (originally scaffolded by Google AI Studio) that presents three persona-driven AI agents backed by the Gemini API. A small Express server serves the SPA and proxies all Gemini calls so the API key never reaches the browser.
+"Hackathon Companion" — a **React/Vite SPA + FastAPI (Python) backend** (originally scaffolded by Google AI Studio, since migrated off Node/Gemini). Pastel/glassmorphic, cute, character-driven UI. Three persona-driven agents:
+- **Luna** — teammate matching. **Requirement-driven page** (not chat): the user types who they're looking for → the text is embedded → **pgvector cosine search** over Supabase profiles → ranked candidates with a **match %** (swipeable cards + a filterable ranked "overview" list).
+- **Orbit** — logistics/schedule **chat** + in-chat reminder scheduler widget.
+- **Sage** — sponsor **perk discovery chat** (API/cloud credits, promo codes).
+
+Implemented this iteration (all documented in detail in the sections below):
+- **Auth** = Supabase Auth (Google OAuth) with a local **guest** fallback; app gated behind a login screen.
+- **LLM = OpenRouter for everything**: chat (`nvidia/nemotron-3-super-120b-a12b:free` by default) + embeddings (`qwen/qwen3-embedding-8b`, MRL-truncated to 1024-dim).
+- **Profiles + matching** persisted in **Supabase + pgvector**; first-login multi-step profile form; `requirement` column drives Luna's search.
+- **Character-Driven UI** (`AGENT_THEME`), agent mascots, and the bracketed-tag prompt↔UI contract.
+- **Graceful degradation everywhere**: missing OpenRouter/Supabase keys → routes return 503 and the client falls back to `localStorage` + a client-side matching heuristic (so the app always boots/demos).
+
+### In plain English (for non-technical readers)
+It's a cute web app that helps people at a hackathon. After signing in (Google), you fill a short profile. Then:
+- **Luna** finds you teammates: you type *what kind of person you need*, and the app shows a ranked list of matching people with a "% match" score. (Behind the scenes it turns text into numbers — "embeddings" — and finds the most similar people. Think "dating-app matching, but for teammates.")
+- **Orbit** is a chatbot that answers schedule/venue questions and can set reminders.
+- **Sage** is a chatbot that tells you which sponsor freebies (free API/cloud credits, tools) you can grab, with promo codes.
+
+The "brain" (AI) runs through a service called **OpenRouter**; user data + the matching live in a **Supabase** database. If those aren't set up, the app still runs in a demo mode using fake/sample data.
+
+## Project status — what's done & what to improve
+
+**✅ Done / working**
+- Three agents (Luna teammate-matching, Orbit logistics chat, Sage perks chat) with distinct cute identities, mascots, and pastel UI.
+- Login with Google (Supabase Auth) + a guest mode; whole app gated behind the login screen.
+- Multi-step profile form on first login; profile saved + embedded.
+- Luna **requirement → ranked matches with %**, plus a filterable overview list (role / status / min-%).
+- All AI (chat + embeddings) via OpenRouter; data + vector search via Supabase pgvector.
+- Demo/fallback mode that works with no database (localStorage + heuristic matching).
+
+**🔧 Needs enhancement / not finished (next session)**
+- **End-to-end real-data not yet verified**: the Supabase vector write path (`/api/seed`, `/api/profile`, `/api/requirement`) hasn't been run successfully with live keys yet — watch for `invalid input syntax for type vector` and adjust `vec_to_pg` ([backend/embeddings.py](backend/embeddings.py)) if it errors.
+- **Security**: the service-role key is currently read as `VITE_SUPABASE_SERVICE_ROLE_KEY` ([backend/config.py](backend/config.py), [backend/deps.py](backend/deps.py)) — the `VITE_` prefix risks leaking a secret to the browser; rename to `SUPABASE_SERVICE_ROLE_KEY`. Also the backend **trusts `userId` from the client** (no Supabase JWT verification) — fine for a demo, not for production.
+- **Dead code**: `runMatch` / `[FIND_MATCHES]` chat path in `App.tsx` is unused now that Luna is requirement-driven (harmless; clean up).
+- **Polish/quality**: no automated tests; chat sends full history every turn (no window → token cost); Orbit/Sage chat isn't persisted; image attachments aren't truly multimodal; reminders are a mock webhook (no real send).
 
 ## Commands
 
-- `npm run dev` — start the Express server with Vite middleware (HMR) via `tsx server.ts` on port **3000**. This is the single entry point for development; there is no standalone Vite dev server.
-- `npm run build` — `vite build` for the client, then `esbuild` bundles `server.ts` into `dist/server.cjs`.
-- `npm start` — run the production bundle (`node dist/server.cjs`); set `NODE_ENV=production` so the server serves static files from `dist/` instead of Vite middleware.
-- `npm run lint` — type-check only (`tsc --noEmit`). There is no test suite.
+- `npm run dev` — runs **both** servers via `concurrently`: FastAPI (`uvicorn backend.main:app` on **:8000**) + the Vite dev server (**:3000**, proxies `/api` → :8000). Use `npm run dev:api` / `npm run dev:web` to run them separately.
+- `npm run build` — `vite build` → `dist/` (frontend only; the backend is Python).
+- `npm start` — `uvicorn backend.main:app` serving the built SPA from `dist/` + the API.
+- `npm run lint` — type-check the frontend only (`tsc --noEmit`). There is no test suite.
+- `npm run legacy:node` — the old Node `server.ts` (superseded by FastAPI; kept for reference).
+- Backend deps: `pip install -r backend/requirements.txt`. Python syntax check: `python -m py_compile backend/*.py backend/routers/*.py`.
 
-Requires `GEMINI_API_KEY` in `.env` (loaded via `dotenv`). Without it the server still starts; the Gemini client is lazily constructed on first `/api/chat` call and throws if the key is missing.
+Env in root `.env` (loaded by both Vite and the backend): `OPENROUTER_API_KEY` (chat + embeddings, both via OpenRouter), `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (client auth), `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (server: profile storage + pgvector). All clients are **lazy + graceful-degrade**: missing env → the app still boots and the affected route returns 503 / falls back.
 
 ## Architecture
 
-The whole app is three files of substance: `server.ts`, `src/App.tsx`, and `src/mockData.ts`.
+Two services: a **React/Vite frontend** (`src/`) and a **FastAPI Python backend** (`backend/`). The frontend proxies `/api` to the backend. The substance lives in `backend/` (routers + `services.py` + `prompts.py`), `src/App.tsx`, and `src/mockData.ts`. **`server.ts` is legacy** — the backend is now Python; do not edit `server.ts` for behavior changes.
 
-### Agents live in the server's system prompts
-The three agents — **Luna** (teammate matcher), **Orbit** (logistics/reminders), **Sage** (perk discovery — sponsor APIs/credits) — are not separate code paths. They are distinguished entirely by the `agentId` field on the `/api/chat` request, which selects a hardcoded `systemInstruction` string in [server.ts](server.ts). Each system prompt embeds the relevant mock data (`TEAMMATES`, `PERKS`, or `SCHEDULE`) as JSON so the model can reference real IDs. **To change agent behavior, data, or available entities, edit the prompt strings in `server.ts`.**
+### Agents live in the backend's system prompts
+The three agents — **Luna** (teammate matcher), **Orbit** (logistics/reminders), **Sage** (perk discovery — sponsor APIs/credits) — are not separate code paths. They are distinguished by the `agentId` on the `/api/chat` request, which selects a system instruction built in [backend/prompts.py](backend/prompts.py). Each prompt embeds the relevant data (`TEAMMATES`, `PERKS`, `SCHEDULE` in [backend/data.py](backend/data.py)) as JSON. Luna's prompt is built **dynamically** from the signed-in user's profile + still-missing fields. **To change agent behavior/data, edit `backend/prompts.py` / `backend/data.py`** (and keep `src/mockData.ts` in sync for what the frontend renders by ID).
 
 ### Character-Driven UI (`AGENT_THEME` in `App.tsx`)
 Each agent owns a full visual identity (`AGENT_THEME[agentId]` at the top of [src/App.tsx](src/App.tsx)): colour theme, mascot emoji, tagline, "thinking" copy, chat-bubble + send-button styling, loading-dot colours, focus ring, and floating "scene" emojis behind the chat. The active agent's theme takes over the whole chat stage. All theme values are **literal Tailwind class strings** (so Tailwind's scanner picks them up) — never build these class names dynamically.
@@ -33,16 +69,30 @@ The agents are instructed to append special tags to their text replies, which th
 | `[TEAMMATES_CAROUSEL: ["t1","t2"]]` | `teamMatchIds` | `TeammateCarousel` of matching `TEAMMATES` |
 | `[SAGE_PERKS: ["p1","p2"]]` | `perkIds` | `PerkCarousel` of matching `PERKS` (sponsor perks w/ promo codes) |
 | `[REMINDER_TRIGGER: {"title","time","location","icon"}]` | `reminderConfig` | Opens the in-chat reminder scheduler widget |
+| `[FIND_MATCHES]` | `findMatches` | Runs teammate matching → `MatchCarousel` of ranked candidates with a match % |
 
 `MENTORS` / `MentorCarousel.tsx` are legacy (Sage was previously a mentor connector) and no longer wired up.
 
 The tag is stripped from the displayed text and the IDs are matched against `mockData.ts`. IDs the model invents that don't exist in the data simply render nothing.
 
-### Backend routes (`server.ts`)
-- `POST /api/chat` — `{ agentId, messages }`. Maps client message roles (`assistant` → `model`) into the GoogleGenAI `contents` schema and calls `gemini-3.5-flash`. Returns `{ reply }`.
-- `POST /api/auth/google` — verifies a Google Identity Services ID token via Google's `tokeninfo` endpoint (no extra dependency), checks `aud` against `VITE_GOOGLE_CLIENT_ID` when set, returns `{ user }`. The whole app is gated behind login ([src/components/LoginScreen.tsx](src/components/LoginScreen.tsx)); session is kept in `localStorage` (see [src/auth.ts](src/auth.ts)) with a guest fallback.
-- `POST /api/reminders/trigger` — mock webhook for Orbit's reminders; only logs and echoes a success payload (no real dispatch).
-- `GET /api/health`.
+### User profile + teammate matching (Luna)
+On first login the app shows a multi-step profile form ([src/components/ProfileOnboarding.tsx](src/components/ProfileOnboarding.tsx)) capturing skills, current/desired role, domain, interests, goals, commitment, selection criteria, status. The field set is defined once in [src/profile.ts](src/profile.ts) (`PROFILE_FIELDS`, `ProfileFields`, `getMissingFields`) and mirrored server-side in [backend/models.py](backend/models.py).
+
+Flow: the form `POST`s to `/api/profile` (Supabase upsert + OpenRouter Qwen3-Embedding-8B embedding, truncated to 1024-dim).
+
+**Luna is requirement-driven, not a chat agent** ([src/components/RequirementPanel.tsx](src/components/RequirementPanel.tsx)): the user types a free-text "who I'm looking for" → `POST /api/requirement` saves it to the `requirement` column, **embeds the requirement text** and runs the **pgvector** cosine search (`match_profiles` RPC, query = requirement embedding vs candidate profile embeddings) → `MatchCarousel` ([src/components/MatchCarousel.tsx](src/components/MatchCarousel.tsx)) with a match %. `MatchCarousel` has two views — swipeable **Cards** and a ranked **Overview** list (rank, role→desired, % bar, domain, status badge, shared-skill chips) with **role / status / min-% filters** (`initialView="overview"` for Luna). Orbit/Sage remain chat agents. (`POST /api/match` still matches by the user's own profile embedding; `[FIND_MATCHES]` in chat is legacy.)
+
+**Graceful fallback (no Supabase/backend):** `loadProfile`/`saveProfile` fall back to `localStorage` and matching falls back to the client-side heuristic `computeMatches` ([src/matching.ts](src/matching.ts)) over `MOCK_PROFILES` ([src/mockData.ts](src/mockData.ts)). Guests are gated by `ALLOW_GUEST_PROFILE` in `App.tsx` (currently `true` for demos).
+
+### Backend routes (FastAPI — [backend/](backend/))
+- `POST /api/chat` — `{ agentId, messages, userId?, userProfile? }` → `{ reply, matches? }`. Builds the agent prompt ([backend/prompts.py](backend/prompts.py)), calls the OpenRouter chat model ([backend/llm.py](backend/llm.py), `chat_completion`); for Luna also extracts/saves profile fields and returns pgvector `matches` on `[FIND_MATCHES]`.
+- `GET /api/profile/{userId}` → `{ profile|null }`; `POST /api/profile` → upsert + embed, returns `{ profile, missing[] }`.
+- `POST /api/match` → `{ userId }` → `{ matches }` (pgvector cosine vs the user's own profile).
+- `POST /api/requirement` → `{ userId, requirement, count? }` → saves the requirement, embeds it, returns `{ matches }` ranked by similarity to that text (powers the Luna page).
+- `POST /api/seed` — seeds the 8 candidate profiles (with embeddings); no-op if present.
+- **Auth = Supabase Auth** (client-side, [src/auth.ts](src/auth.ts)): `supabase.auth.signInWithOAuth({ provider: 'google' })`; supabase-js handles the OAuth redirect + session. The Supabase user `id` (uuid) becomes `profiles.user_id`. App gated behind [src/components/LoginScreen.tsx](src/components/LoginScreen.tsx); a local **guest** mode (no Supabase session) persists in `localStorage`. Client env: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`. The backend `POST /api/auth/google` (GIS verify) is **legacy/unused**.
+- `POST /api/reminders/trigger` — mock webhook (logs + echoes). `GET /api/health`.
+- Supabase access is **server-only** (service-role key); `role` column is used instead of the reserved `current_role`. Schema: [supabase/schema.sql](supabase/schema.sql).
 
 ### Frontend (`src/App.tsx`)
 One large component (~1600 lines) holding all state: separate chat histories per agent (`chats.luna/orbit/sage`), onboarding carousel, toasts, live countdown, plus browser Speech Recognition (voice input, defaults to `vi-VN`) and image attach (base64, sent as `[Attached Image]` text prefix — images are not actually sent to Gemini as multimodal parts). Carousels are in `src/components/`.
@@ -52,4 +102,5 @@ One large component (~1600 lines) holding all state: separate chat histories per
 - TypeScript ESM throughout; imports use explicit `.ts`/`.tsx` extensions (e.g. `import { TEAMMATES } from "./src/mockData.ts"` in the server). The `@` alias resolves to the project root (see `vite.config.ts`).
 - Styling is Tailwind CSS v4 via `@tailwindcss/vite` (no `tailwind.config.js`); animations use `motion/react`. The aesthetic is intentionally pastel/glassmorphic — match the existing rounded-`[32px]`, `backdrop-blur`, gradient-orb idiom when adding UI.
 - HMR/file-watching is disabled when `DISABLE_HMR=true` (set by AI Studio to prevent flicker during agent edits) — see `vite.config.ts`. Do not change that block casually.
-- The model is referenced as `gemini-3.5-flash`; mock data and prompts reference "Gemini 3.5". Keep model-id changes confined to `server.ts`.
+- Model config in [backend/config.py](backend/config.py): **everything via OpenRouter** (OpenAI-compatible). Chat = `OPENROUTER_CHAT_MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`) through [backend/llm.py](backend/llm.py). Embeddings = `EMBED_MODEL` (default `qwen/qwen3-embedding-8b`); `embed_text` ([backend/embeddings.py](backend/embeddings.py)) POSTs `/embeddings` and **truncates + L2-normalizes** the (4096-dim, MRL) vector to `EMBED_DIM` (default `1024`). Changing `EMBED_DIM` requires recreating the `embedding vector(N)` column + HNSW index in `supabase/schema.sql` (pgvector HNSW supports ≤2000 dims).
+- The backend imports `google`/`supabase` **lazily inside functions** (not at module top), so `backend.main` imports with only FastAPI installed and degrades gracefully when keys are missing.

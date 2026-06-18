@@ -7,10 +7,16 @@ import {
   Perk,
   EventScheduleItem
 } from './mockData';
+import { MOCK_PROFILES } from './mockData';
 import TeammateCarousel from './components/TeammateCarousel';
 import PerkCarousel from './components/PerkCarousel';
 import LoginScreen from './components/LoginScreen';
-import { AuthUser, loadStoredUser, storeUser, googleSignOut } from './auth';
+import ProfileOnboarding from './components/ProfileOnboarding';
+import MatchCarousel from './components/MatchCarousel';
+import RequirementPanel from './components/RequirementPanel';
+import { computeMatches, MatchCandidate } from './matching';
+import { ProfileFields, loadProfile, saveProfile, getMissingFields, findMatchesApi } from './profile';
+import { AuthUser, getSessionUser, onAuthChange, signOutSupabase, loadGuest, storeGuest } from './auth';
 import {
   Send,
   Users, 
@@ -43,6 +49,7 @@ interface ChatMessage {
   // Extracted structures
   teamMatchIds?: string[];
   perkIds?: string[];
+  matches?: MatchCandidate[];
   reminderConfig?: {
     title: string;
     time: string;
@@ -140,9 +147,53 @@ const AGENT_THEME: Record<AgentId, {
   },
 };
 
+// TEMP (demo): let Guest accounts use the profile form + teammate matching too.
+// Set back to false to require a real (non-guest) sign-in for these features.
+const ALLOW_GUEST_PROFILE = true;
+
 export default function App() {
-  // Authenticated user (Google OAuth or guest). Restored from localStorage on load.
-  const [user, setUser] = useState<AuthUser | null>(() => loadStoredUser());
+  // Authenticated user (Supabase Auth or local guest). Guest restored synchronously;
+  // a real Supabase session resolves in the effect below.
+  const [user, setUser] = useState<AuthUser | null>(() => loadGuest());
+
+  // Resolve the persisted Supabase session and subscribe to sign-in/out.
+  useEffect(() => {
+    let active = true;
+    getSessionUser().then((u) => {
+      if (active && u) setUser(u);
+    });
+    const unsub = onAuthChange((u) => {
+      if (u) {
+        storeGuest(null); // a real session supersedes any guest session
+        setUser(u);
+      }
+    });
+    return () => { active = false; unsub(); };
+  }, []);
+
+  // User profile for Luna's matching (Phase-1 mock: persisted in localStorage).
+  const [profile, setProfile] = useState<ProfileFields | null>(null);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileEditMode, setProfileEditMode] = useState(false);
+
+  // Load the user's profile; auto-show the form on first login for signed-in users
+  // only. Guests skip the form entirely (they can still open "Edit profile" manually).
+  useEffect(() => {
+    if (!user || (user.guest && !ALLOW_GUEST_PROFILE)) {
+      setProfile(null);
+      return;
+    }
+    let active = true;
+    loadProfile(user.sub).then((p) => {
+      if (!active) return;
+      setProfile(p);
+      if (!p && !user.guest) {
+        setProfileEditMode(false);
+        setShowProfileForm(true);
+      }
+    });
+    return () => { active = false; };
+  }, [user]);
 
   // Onboarding or Main screen view
   const [isOnboarding, setIsOnboarding] = useState(true);
@@ -152,7 +203,7 @@ export default function App() {
   const theme = AGENT_THEME[activeAgent];
 
   // Onboarding Carousel States
-  const [centerAgent, setCenterAgent] = useState<'luna' | 'orbit' | 'sage'>('orbit');
+  const [centerAgent, setCenterAgent] = useState<'luna' | 'orbit' | 'sage'>('luna');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   // Auto-rotate onboarding center card
@@ -187,7 +238,7 @@ export default function App() {
       {
         id: 'l1',
         role: 'assistant',
-        content: `Woohoo! Welcome to the Hackathon, buddy! 🚀 I'm **Luna**, your energetic teammate matching matchmaker! \n\nI've analyzed all **240+ participants** currently wandering around. Tell me: What's your **tech stack**, your preferred **role** (Dev, UI/UX Designer, or Business Pitcher), and what kind of cool idea are you hoping to build? Let's pair you up with absolute stars! ✨`,
+        content: `Woohoo! Welcome to the Hackathon, buddy! 🚀 I'm **Luna**, your energetic teammate matching matchmaker! \n\nI've analyzed all **240+ participants** currently wandering around. Tell me: What's your **tech stack**, your preferred **team role** (Frontend, Backend, AI/Data Engineer, Product Manager, UI/UX Designer, or Business Pitcher), and what kind of cool idea are you hoping to build? Let's pair you up with absolute stars! ✨`,
         timestamp: new Date()
       }
     ],
@@ -248,7 +299,7 @@ export default function App() {
       const rec = new SpeechRecognition();
       rec.continuous = false;
       rec.interimResults = false;
-      rec.lang = 'vi-VN'; // Support Vietnamese voice input query defaults!
+      rec.lang = 'en-US'; // Voice input language
 
       rec.onstart = () => {
         setIsListening(true);
@@ -385,11 +436,13 @@ export default function App() {
     teamMatchIds?: string[];
     perkIds?: string[];
     reminderConfig?: any;
+    findMatches?: boolean;
   } => {
     let cleanedText = rawText;
     let teamMatchIds: string[] | undefined;
     let perkIds: string[] | undefined;
     let reminderConfig: any = undefined;
+    let findMatches = false;
 
     // 1. Parse TEAMMATES CAROUSEL ID tag
     // Format: [TEAMMATES_CAROUSEL: ["t1", "t2"]]
@@ -430,7 +483,15 @@ export default function App() {
       }
     }
 
-    return { cleanedText, teamMatchIds, perkIds, reminderConfig };
+    // 4. Parse FIND_MATCHES trigger — Luna signals she has enough info to match.
+    // Format: [FIND_MATCHES]
+    const findMatchesPattern = /\[FIND_MATCHES\]/;
+    if (findMatchesPattern.test(rawText)) {
+      findMatches = true;
+      cleanedText = cleanedText.replace(findMatchesPattern, '').trim();
+    }
+
+    return { cleanedText, teamMatchIds, perkIds, reminderConfig, findMatches };
   };
 
   // Action Dispatch: Send Chat Message to server
@@ -478,14 +539,21 @@ export default function App() {
       if (attachedImage) {
         promptText = `[Attached Image] ${promptText || "Take a look at this image!"}`;
       }
+
       currentHistory.push({ role: 'user', content: promptText });
+
+      // For Luna, send the profile context so the backend can chase missing fields,
+      // silently learn from the turn, and run pgvector matching on [FIND_MATCHES].
+      const includeProfile = activeAgent === 'luna' && !!profile && (!user.guest || ALLOW_GUEST_PROFILE);
 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentId: activeAgent,
-          messages: currentHistory
+          messages: currentHistory,
+          userId: includeProfile ? user.sub : undefined,
+          userProfile: includeProfile ? profile : undefined,
         })
       });
 
@@ -497,7 +565,15 @@ export default function App() {
       const rawReply = data.reply;
 
       // Parse metadata elements from API reply
-      const { cleanedText, teamMatchIds, perkIds, reminderConfig } = parseMessageResponse(rawReply);
+      const { cleanedText, teamMatchIds, perkIds, reminderConfig, findMatches } = parseMessageResponse(rawReply);
+
+      // Prefer backend (pgvector) matches; otherwise fall back to the local heuristic on [FIND_MATCHES].
+      let matches: MatchCandidate[] | undefined;
+      if (data.matches && data.matches.length) {
+        matches = data.matches as MatchCandidate[];
+      } else if (findMatches && profile) {
+        matches = computeMatches(profile, MOCK_PROFILES, 4);
+      }
 
       const aiMsgId = 'ai-' + Math.random().toString();
       const newResponse: ChatMessage = {
@@ -507,7 +583,8 @@ export default function App() {
         timestamp: new Date(),
         teamMatchIds,
         perkIds,
-        reminderConfig
+        reminderConfig,
+        matches
       };
 
       setChats(prev => ({
@@ -534,6 +611,9 @@ export default function App() {
       }
       if (perkIds) {
         addToast("Sage uncovered sponsor perks & credits for your build!", "success");
+      }
+      if (matches) {
+        addToast("Luna ran the match and ranked your top teammates! 💜", "success");
       }
 
     } catch (err: any) {
@@ -605,20 +685,80 @@ export default function App() {
     addToast(`${agent.charAt(0).toUpperCase() + agent.slice(1)} initialized. Welcome aboard!`, 'info');
   };
 
-  // Auth: persist on login, clear everything on logout.
+  // Guest login (real users sign in via Supabase OAuth → handled by onAuthChange).
   const handleLogin = (loggedIn: AuthUser) => {
     setUser(loggedIn);
-    storeUser(loggedIn);
+    if (loggedIn.guest) storeGuest(loggedIn);
     setIsOnboarding(true);
     addToast(`Welcome, ${loggedIn.name.split(' ')[0]}! 🌷`, 'success');
   };
 
-  const handleLogout = () => {
-    googleSignOut();
+  const handleLogout = async () => {
+    const wasGuest = user?.guest;
+    storeGuest(null);
     setUser(null);
-    storeUser(null);
+    setProfile(null);
+    setShowProfileForm(false);
     setIsOnboarding(true);
+    if (!wasGuest) await signOutSupabase();
     addToast('Signed out. See you soon! 👋', 'info');
+  };
+
+  // Profile form callbacks (Phase-1 mock store).
+  const profileMeta = () => ({ name: user?.name, email: user?.email, avatar: user?.picture });
+  const handleProfileSave = async (fields: ProfileFields) => {
+    if (user) await saveProfile(user.sub, fields, profileMeta());
+    setProfile(fields);
+    setShowProfileForm(false);
+    addToast('Profile saved! Luna is ready to match you 🌟', 'success');
+  };
+  const handleProfileSkip = async (fields: ProfileFields) => {
+    // On first-time skip we still persist (even if empty) so the form doesn't reappear;
+    // when editing, just close without changes.
+    if (!profileEditMode && user) {
+      await saveProfile(user.sub, fields, profileMeta());
+      setProfile(fields);
+    }
+    setShowProfileForm(false);
+  };
+  const openEditProfile = () => {
+    setProfileEditMode(true);
+    setShowProfileForm(true);
+  };
+
+  // "✨ Find my teammates" — try the backend (pgvector); fall back to the local heuristic.
+  const runMatch = async () => {
+    if (!user || (user.guest && !ALLOW_GUEST_PROFILE)) {
+      addToast('Sign in to use teammate matching!', 'info');
+      return;
+    }
+    if (!profile) {
+      setProfileEditMode(false);
+      setShowProfileForm(true);
+      return;
+    }
+    let matches: MatchCandidate[];
+    try {
+      const apiMatches = await findMatchesApi(user.sub);
+      matches = apiMatches.length ? (apiMatches as MatchCandidate[]) : computeMatches(profile, MOCK_PROFILES, 4);
+    } catch {
+      matches = computeMatches(profile, MOCK_PROFILES, 4);
+    }
+    const missing = getMissingFields(profile);
+    const intro = missing.length
+      ? `Here's who I found with what I know so far! Tell me your ${missing.map(m => m.label).join(', ')} for even sharper matches. ✨`
+      : `Amazing — here are your top teammate matches! ✨`;
+    const msg: ChatMessage = {
+      id: 'match-' + Math.random().toString(),
+      role: 'assistant',
+      content: intro,
+      timestamp: new Date(),
+      matches,
+    };
+    setActiveAgent('luna');
+    setIsOnboarding(false);
+    setChats(prev => ({ ...prev, luna: [...prev.luna, msg] }));
+    addToast('Luna ranked your top teammates! 💜', 'success');
   };
 
   // Convert double-asterisk to bold tags and newlines to paragraphs for chat bubble rendering
@@ -645,6 +785,18 @@ export default function App() {
   // Gate the entire app behind sign-in.
   if (!user) {
     return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // First-login profile capture (and "Edit profile") — skipped for guests.
+  if (showProfileForm) {
+    return (
+      <ProfileOnboarding
+        initial={profile}
+        isEdit={profileEditMode}
+        onComplete={handleProfileSave}
+        onSkip={handleProfileSkip}
+      />
+    );
   }
 
   return (
@@ -1139,6 +1291,18 @@ export default function App() {
                 >
                   <span>🔄</span> Change Assistant
                 </button>
+
+                {/* Edit profile */}
+                {(!user.guest || ALLOW_GUEST_PROFILE) && (
+                  <button
+                    type="button"
+                    id="btn-edit-profile"
+                    onClick={openEditProfile}
+                    className="mt-2 w-full py-2.5 px-4 bg-white/80 hover:bg-white text-violet-600 hover:text-violet-700 border border-violet-100 hover:border-violet-200 rounded-2xl text-[11px] font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <span>📝</span> Edit profile
+                  </button>
+                )}
               </div>
 
             </div>
@@ -1232,6 +1396,11 @@ export default function App() {
                 </div>
               </div>
 
+              {activeAgent === 'luna' ? (
+                /* Luna = requirement-driven matching (no chat) */
+                <RequirementPanel user={user} />
+              ) : (
+              <>
               {/* Chat Viewport scrolling block */}
               <div ref={chatViewportRef} className="flex-1 overflow-y-auto pr-2 space-y-4 min-h-0 select-text">
                 <AnimatePresence initial={false}>
@@ -1297,9 +1466,20 @@ export default function App() {
                               animate={{ opacity: 1, scale: 1 }}
                               className="w-full mt-1"
                             >
-                              <TeammateCarousel 
-                                participants={TEAMMATES.filter(t => m.teamMatchIds?.includes(t.id))} 
+                              <TeammateCarousel
+                                participants={TEAMMATES.filter(t => m.teamMatchIds?.includes(t.id))}
                               />
+                            </motion.div>
+                          )}
+
+                          {/* Vector match results with % (Luna) */}
+                          {isAi && m.matches && m.matches.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="w-full mt-1"
+                            >
+                              <MatchCarousel matches={m.matches} />
                             </motion.div>
                           )}
 
@@ -1516,7 +1696,7 @@ export default function App() {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                     </span>
                     <span className="text-[11px] font-bold text-rose-600 animate-pulse">
-                      Mic Active: Listening in Vietnamese (vi-VN)... Speak now!
+                      Mic Active: Listening... Speak now!
                     </span>
                   </div>
                   
@@ -1612,17 +1792,31 @@ export default function App() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setInputText("Find a UX Designer who is familiar with Figma and Mobile style to form a crew of 3.")}
-                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
+                      onClick={runMatch}
+                      className="text-[9.5px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-pink-500 hover:brightness-105 hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm"
                     >
-                      🔍 Need Designer
+                      ✨ Find my teammates
                     </button>
                     <button
                       type="button"
-                      onClick={() => setInputText("I am a Python developer building a generative agent app. Recommend some React full-stack members!")}
+                      onClick={() => setInputText("Find teammates who have built AI agents and shipped them.")}
                       className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
                     >
-                      🌟 Recommend React matched member
+                      🤖 Built AI agents
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputText("Find builders who have shipped a real product before, not just demos.")}
+                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
+                    >
+                      🚀 Shipped a product
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputText("Find teammates interested in the same hackathon track as me.")}
+                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
+                    >
+                      🎯 Same track as me
                     </button>
                   </>
                 ) : activeAgent === 'orbit' ? (
@@ -1661,6 +1855,8 @@ export default function App() {
                   </>
                 )}
               </div>
+              </>
+              )}
 
             {/* MOBILE BOTTOM NAVIGATION BAR (NESTED INSIDE GLASS CARD FOR PERFECT FLUSH FIT AND NO VISUAL GAPS) */}
             <div className="flex md:hidden justify-around items-center bg-white/95 backdrop-blur-lg border-t border-slate-100/70 py-2 px-2 shrink-0 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] z-20 -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 mt-3.5">
