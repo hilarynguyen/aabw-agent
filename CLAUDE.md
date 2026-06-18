@@ -4,7 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-"Hackathon Companion" — a single-page React app (originally scaffolded by Google AI Studio) that presents three persona-driven AI agents backed by the Gemini API. A small Express server serves the SPA and proxies all Gemini calls so the API key never reaches the browser.
+"Hackathon Companion" — a **React/Vite SPA + FastAPI (Python) backend** (originally scaffolded by Google AI Studio, since migrated off Node/Gemini). Pastel/glassmorphic, cute, character-driven UI. Three persona-driven agents:
+- **Luna** — teammate matching. **Requirement-driven page** (not chat): the user types who they're looking for → the text is embedded → **pgvector cosine search** over Supabase profiles → ranked candidates with a **match %** (swipeable cards + a filterable ranked "overview" list).
+- **Orbit** — logistics/schedule **chat** + in-chat reminder scheduler widget.
+- **Sage** — sponsor **perk discovery chat** (API/cloud credits, promo codes).
+
+Implemented this iteration (all documented in detail in the sections below):
+- **Auth** = Supabase Auth (Google OAuth) with a local **guest** fallback; app gated behind a login screen.
+- **LLM = OpenRouter for everything**: chat (`nvidia/nemotron-3-super-120b-a12b:free` by default) + embeddings (`qwen/qwen3-embedding-8b`, MRL-truncated to 1024-dim).
+- **Profiles + matching** persisted in **Supabase + pgvector**; first-login multi-step profile form; `requirement` column drives Luna's search.
+- **Character-Driven UI** (`AGENT_THEME`), agent mascots, and the bracketed-tag prompt↔UI contract.
+- **Graceful degradation everywhere**: missing OpenRouter/Supabase keys → routes return 503 and the client falls back to `localStorage` + a client-side matching heuristic (so the app always boots/demos).
+
+### In plain English (for non-technical readers)
+It's a cute web app that helps people at a hackathon. After signing in (Google), you fill a short profile. Then:
+- **Luna** finds you teammates: you type *what kind of person you need*, and the app shows a ranked list of matching people with a "% match" score. (Behind the scenes it turns text into numbers — "embeddings" — and finds the most similar people. Think "dating-app matching, but for teammates.")
+- **Orbit** is a chatbot that answers schedule/venue questions and can set reminders.
+- **Sage** is a chatbot that tells you which sponsor freebies (free API/cloud credits, tools) you can grab, with promo codes.
+
+The "brain" (AI) runs through a service called **OpenRouter**; user data + the matching live in a **Supabase** database. If those aren't set up, the app still runs in a demo mode using fake/sample data.
+
+## Project status — what's done & what to improve
+
+**✅ Done / working**
+- Three agents (Luna teammate-matching, Orbit logistics chat, Sage perks chat) with distinct cute identities, mascots, and pastel UI.
+- Login with Google (Supabase Auth) + a guest mode; whole app gated behind the login screen.
+- Multi-step profile form on first login; profile saved + embedded.
+- Luna **requirement → ranked matches with %**, plus a filterable overview list (role / status / min-%).
+- All AI (chat + embeddings) via OpenRouter; data + vector search via Supabase pgvector.
+- Demo/fallback mode that works with no database (localStorage + heuristic matching).
+
+**🔧 Needs enhancement / not finished (next session)**
+- **End-to-end real-data not yet verified**: the Supabase vector write path (`/api/seed`, `/api/profile`, `/api/requirement`) hasn't been run successfully with live keys yet — watch for `invalid input syntax for type vector` and adjust `vec_to_pg` ([backend/embeddings.py](backend/embeddings.py)) if it errors.
+- **Security**: the service-role key is currently read as `VITE_SUPABASE_SERVICE_ROLE_KEY` ([backend/config.py](backend/config.py), [backend/deps.py](backend/deps.py)) — the `VITE_` prefix risks leaking a secret to the browser; rename to `SUPABASE_SERVICE_ROLE_KEY`. Also the backend **trusts `userId` from the client** (no Supabase JWT verification) — fine for a demo, not for production.
+- **Dead code**: `runMatch` / `[FIND_MATCHES]` chat path in `App.tsx` is unused now that Luna is requirement-driven (harmless; clean up).
+- **Polish/quality**: no automated tests; chat sends full history every turn (no window → token cost); Orbit/Sage chat isn't persisted; image attachments aren't truly multimodal; reminders are a mock webhook (no real send).
 
 ## Commands
 
@@ -44,14 +78,17 @@ The tag is stripped from the displayed text and the IDs are matched against `moc
 ### User profile + teammate matching (Luna)
 On first login the app shows a multi-step profile form ([src/components/ProfileOnboarding.tsx](src/components/ProfileOnboarding.tsx)) capturing skills, current/desired role, domain, interests, goals, commitment, selection criteria, status. The field set is defined once in [src/profile.ts](src/profile.ts) (`PROFILE_FIELDS`, `ProfileFields`, `getMissingFields`) and mirrored server-side in [backend/models.py](backend/models.py).
 
-Flow: the form `POST`s to `/api/profile` (Supabase upsert + OpenRouter Qwen3-Embedding-8B embedding, truncated to 1024-dim). When chatting with Luna, `App.tsx` sends `userId` + `userProfile`; the backend ([backend/routers/chat.py](backend/routers/chat.py)) injects them into Luna's prompt to chase missing fields, runs a **structured-extraction** pass (`response_schema=ProfileFields`) to silently learn from the turn and re-embed, and on `[FIND_MATCHES]` runs the **pgvector** cosine search (`match_profiles` RPC) returning ranked candidates → `MatchCarousel` with a match %. The "✨ Find my teammates" quick action calls `POST /api/match` directly.
+Flow: the form `POST`s to `/api/profile` (Supabase upsert + OpenRouter Qwen3-Embedding-8B embedding, truncated to 1024-dim).
+
+**Luna is requirement-driven, not a chat agent** ([src/components/RequirementPanel.tsx](src/components/RequirementPanel.tsx)): the user types a free-text "who I'm looking for" → `POST /api/requirement` saves it to the `requirement` column, **embeds the requirement text** and runs the **pgvector** cosine search (`match_profiles` RPC, query = requirement embedding vs candidate profile embeddings) → `MatchCarousel` ([src/components/MatchCarousel.tsx](src/components/MatchCarousel.tsx)) with a match %. `MatchCarousel` has two views — swipeable **Cards** and a ranked **Overview** list (rank, role→desired, % bar, domain, status badge, shared-skill chips) with **role / status / min-% filters** (`initialView="overview"` for Luna). Orbit/Sage remain chat agents. (`POST /api/match` still matches by the user's own profile embedding; `[FIND_MATCHES]` in chat is legacy.)
 
 **Graceful fallback (no Supabase/backend):** `loadProfile`/`saveProfile` fall back to `localStorage` and matching falls back to the client-side heuristic `computeMatches` ([src/matching.ts](src/matching.ts)) over `MOCK_PROFILES` ([src/mockData.ts](src/mockData.ts)). Guests are gated by `ALLOW_GUEST_PROFILE` in `App.tsx` (currently `true` for demos).
 
 ### Backend routes (FastAPI — [backend/](backend/))
 - `POST /api/chat` — `{ agentId, messages, userId?, userProfile? }` → `{ reply, matches? }`. Builds the agent prompt ([backend/prompts.py](backend/prompts.py)), calls the OpenRouter chat model ([backend/llm.py](backend/llm.py), `chat_completion`); for Luna also extracts/saves profile fields and returns pgvector `matches` on `[FIND_MATCHES]`.
 - `GET /api/profile/{userId}` → `{ profile|null }`; `POST /api/profile` → upsert + embed, returns `{ profile, missing[] }`.
-- `POST /api/match` → `{ userId }` → `{ matches }` (pgvector cosine, `matchPercent`).
+- `POST /api/match` → `{ userId }` → `{ matches }` (pgvector cosine vs the user's own profile).
+- `POST /api/requirement` → `{ userId, requirement, count? }` → saves the requirement, embeds it, returns `{ matches }` ranked by similarity to that text (powers the Luna page).
 - `POST /api/seed` — seeds the 8 candidate profiles (with embeddings); no-op if present.
 - **Auth = Supabase Auth** (client-side, [src/auth.ts](src/auth.ts)): `supabase.auth.signInWithOAuth({ provider: 'google' })`; supabase-js handles the OAuth redirect + session. The Supabase user `id` (uuid) becomes `profiles.user_id`. App gated behind [src/components/LoginScreen.tsx](src/components/LoginScreen.tsx); a local **guest** mode (no Supabase session) persists in `localStorage`. Client env: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`. The backend `POST /api/auth/google` (GIS verify) is **legacy/unused**.
 - `POST /api/reminders/trigger` — mock webhook (logs + echoes). `GET /api/health`.

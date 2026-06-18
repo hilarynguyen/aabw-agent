@@ -398,87 +398,130 @@ export interface PoolProfile {
   avatar: string;
   email: string;
   linkedin: string;
-  currentRole: 'Developer' | 'Designer' | 'Business / Pitch';
-  desiredRole: string;
+  github?: string;
+  portfolio?: string;
+  currentRole: string;          // background / occupation
+  aiMlExperience?: string;
+  agenticExperience?: string;
+  hackathonCount?: string;
+  englishLevel?: string;
+  desiredRole: string;          // team role wanted
+  tracks?: string[];
   domain: string;
-  skills: string[];
+  skills: string[];             // programming languages
+  frameworks?: string[];
+  aiTools?: string[];
+  techStack?: string[];
   interests: string[];
+  ideaStage?: string;
+  ideaDescription?: string;
   commitment: string;
   status: string;
-  bio: string;
 }
 
 export const MOCK_PROFILES: PoolProfile[] = [
   {
     id: "t1", name: "Alex Rivera", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alex",
     email: "alex.rivera@example.com", linkedin: "https://linkedin.com/in/alex-rivera-hack",
-    currentRole: "Developer", desiredRole: "Designer", domain: "AI agents",
-    skills: ["React", "TypeScript", "Node.js", "Express"],
+    github: "https://github.com/alexrivera", portfolio: "https://alexrivera.dev",
+    currentRole: "Developer", aiMlExperience: "1–2 years", agenticExperience: "Intermediate",
+    hackathonCount: "4–5 times", englishLevel: "Fluent",
+    desiredRole: "Frontend", tracks: ["F&B Track", "Retail Track"], domain: "AI agents",
+    skills: ["TypeScript", "JavaScript", "Python"], frameworks: ["React", "Next.js", "FastAPI"],
+    aiTools: ["OpenAI", "n8n", "Vercel AI SDK"], techStack: ["Next.js", "Supabase", "Vercel"],
     interests: ["LLMs", "Full-stack", "Developer tools"],
-    commitment: "Serious / aiming to win", status: "Looking for a team",
-    bio: "Fullstack dev who loves wiring LLM APIs into beautiful web apps."
+    ideaStage: "Rough idea", ideaDescription: "An AI menu recommender that personalizes restaurant orders.",
+    commitment: "Serious / aiming to win", status: "Looking for a team"
   },
   {
     id: "t2", name: "Susan Jones", avatar: "https://api.dicebear.com/7.x/lorelei/svg?seed=Susan",
     email: "susan@example.com", linkedin: "https://linkedin.com/in/susan-jones-ux",
-    currentRole: "Designer", desiredRole: "Developer", domain: "Design systems",
-    skills: ["Figma", "Prototyping", "Branding", "User Testing"],
+    portfolio: "https://dribbble.com/susanjones",
+    currentRole: "Other", aiMlExperience: "< 1 year", agenticExperience: "Beginner",
+    hackathonCount: "2–3 times", englishLevel: "Native",
+    desiredRole: "UI/UX Designer", tracks: ["Gaming Track"], domain: "Design systems",
+    skills: ["JavaScript"], frameworks: ["React", "Tailwind"],
+    aiTools: ["Midjourney", "OpenAI"], techStack: ["Figma", "Framer"],
     interests: ["Micro-interactions", "Pastel UI", "Accessibility"],
-    commitment: "Serious / aiming to win", status: "Looking for a team",
-    bio: "Senior UI/UX designer obsessed with seamless, gorgeous user journeys."
+    ideaStage: "Looking for a team with an idea",
+    commitment: "Serious / aiming to win", status: "Looking for a team"
   },
   {
     id: "t3", name: "Minh Nguyen", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Minh",
     email: "minh.n@example.com", linkedin: "https://linkedin.com/in/minh-nguyen-ai",
-    currentRole: "Developer", desiredRole: "Designer", domain: "AI agents",
-    skills: ["Python", "PyTorch", "Gemini API", "FastAPI"],
+    github: "https://github.com/minhnguyen-ai",
+    currentRole: "AI Engineer", aiMlExperience: "3–5 years", agenticExperience: "Advanced",
+    hackathonCount: "6+ times", englishLevel: "Conversational",
+    desiredRole: "AI/Data Engineer", tracks: ["Mobility Track"], domain: "AI agents",
+    skills: ["Python", "TypeScript"], frameworks: ["PyTorch", "FastAPI", "LangChain"],
+    aiTools: ["Qwen", "Hugging Face", "AWS", "OpenAI"], techStack: ["FastAPI", "pgvector", "AWS"],
     interests: ["AI agents", "RAG", "Vector search"],
-    commitment: "All-in 🚀", status: "Looking for a team",
-    bio: "AI/Python engineer building smart agents — needs a React frontend partner."
+    ideaStage: "Have a concrete idea", ideaDescription: "A multi-agent route planner for last-mile delivery.",
+    commitment: "All-in 🚀", status: "Looking for a team"
   },
   {
     id: "t4", name: "Chloe Chen", avatar: "https://api.dicebear.com/7.x/open-peeps/svg?seed=Chloe",
     email: "chloe.c@example.com", linkedin: "https://linkedin.com/in/chloe-chen-biz",
-    currentRole: "Business / Pitch", desiredRole: "Developer", domain: "FinTech",
-    skills: ["Market Research", "Pitching", "Financial Modeling", "SaaS"],
+    portfolio: "https://chloechen.co",
+    currentRole: "Founder", aiMlExperience: "< 1 year", agenticExperience: "Beginner",
+    hackathonCount: "4–5 times", englishLevel: "Fluent",
+    desiredRole: "Business Pitcher", tracks: ["Retail Track"], domain: "FinTech / Retail",
+    skills: ["SQL"], frameworks: [],
+    aiTools: ["OpenAI", "n8n"], techStack: ["Notion", "Airtable"],
     interests: ["Storytelling", "Go-to-market", "Unit economics"],
-    commitment: "Serious / aiming to win", status: "Have a team, open to more",
-    bio: "Product/growth PM and 3x hackathon winner who turns code into a venture pitch."
+    ideaStage: "Rough idea", ideaDescription: "AI loyalty assistant that boosts repeat retail purchases.",
+    commitment: "Serious / aiming to win", status: "Have a team, open to more"
   },
   {
     id: "t5", name: "Sarah Jenkins", avatar: "https://api.dicebear.com/7.x/lorelei/svg?seed=Sarah",
     email: "sarah.jenkins@example.com", linkedin: "https://linkedin.com/in/sarah-j-design",
-    currentRole: "Designer", desiredRole: "Developer", domain: "Interactive web",
-    skills: ["Figma", "Motion Design", "3D Art", "Affinity Designer"],
+    portfolio: "https://sarahjenkins.art",
+    currentRole: "Other", aiMlExperience: "None", agenticExperience: "None",
+    hackathonCount: "First time", englishLevel: "Native",
+    desiredRole: "UI/UX Designer", tracks: ["Aviation Track"], domain: "Interactive web",
+    skills: ["JavaScript"], frameworks: ["Three.js", "GSAP"],
+    aiTools: ["Midjourney", "Runway"], techStack: ["Figma", "Blender"],
     interests: ["3D web", "CSS animation", "Creative coding"],
-    commitment: "Casual / for fun", status: "Just exploring",
-    bio: "Creative director blending 3D and smooth CSS into web storytelling."
+    ideaStage: "No idea yet",
+    commitment: "Casual / for fun", status: "Just exploring"
   },
   {
     id: "t6", name: "Marcus Aurelius", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Marcus",
     email: "marcus@example.com", linkedin: "https://linkedin.com/in/marcus-native",
-    currentRole: "Developer", desiredRole: "Business / Pitch", domain: "Mobile games",
-    skills: ["React Native", "Flutter", "iOS", "Android"],
+    github: "https://github.com/marcusaurelius-dev",
+    currentRole: "Developer", aiMlExperience: "1–2 years", agenticExperience: "Intermediate",
+    hackathonCount: "6+ times", englishLevel: "Fluent",
+    desiredRole: "Frontend", tracks: ["Gaming Track"], domain: "Mobile games",
+    skills: ["Dart", "Swift", "Kotlin"], frameworks: ["React Native", "Flutter"],
+    aiTools: ["OpenAI", "AWS"], techStack: ["Flutter", "Firebase", "AWS"],
     interests: ["Cross-platform", "Mobile games", "Native performance"],
-    commitment: "All-in 🚀", status: "Looking for a team",
-    bio: "Ex-Meta engineer crafting beautiful cross-platform mobile experiences."
+    ideaStage: "Rough idea", ideaDescription: "An AI game master that generates live mobile quests.",
+    commitment: "All-in 🚀", status: "Looking for a team"
   },
   {
     id: "t7", name: "Priya Sharma", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Priya",
     email: "priya.s@example.com", linkedin: "https://linkedin.com/in/priya-sharma-web3",
-    currentRole: "Developer", desiredRole: "Anyone complementary", domain: "Web3",
-    skills: ["Solidity", "TypeScript", "Next.js", "Smart Contracts"],
-    interests: ["Web3", "DeFi", "Zero-knowledge"],
-    commitment: "Serious / aiming to win", status: "Looking for a team",
-    bio: "Web3 engineer shipping on-chain apps; loves a strong design + pitch duo."
+    github: "https://github.com/priyasharma", portfolio: "https://priya.build",
+    currentRole: "Developer", aiMlExperience: "1–2 years", agenticExperience: "Intermediate",
+    hackathonCount: "2–3 times", englishLevel: "Fluent",
+    desiredRole: "Backend", tracks: ["Real Estate Track"], domain: "PropTech / Web3",
+    skills: ["TypeScript", "Python", "Solidity"], frameworks: ["Next.js", "FastAPI"],
+    aiTools: ["OpenAI", "Qwen", "AWS"], techStack: ["Next.js", "Postgres", "AWS"],
+    interests: ["Web3", "PropTech", "Automation"],
+    ideaStage: "Looking for a team with an idea",
+    commitment: "Serious / aiming to win", status: "Looking for a team"
   },
   {
     id: "t8", name: "Diego Lopez", avatar: "https://api.dicebear.com/7.x/open-peeps/svg?seed=Diego",
     email: "diego.l@example.com", linkedin: "https://linkedin.com/in/diego-lopez-growth",
-    currentRole: "Business / Pitch", desiredRole: "Designer", domain: "AI agents",
-    skills: ["Pitching", "Growth", "User Research", "Notion"],
+    portfolio: "https://diegolopez.io",
+    currentRole: "Founder", aiMlExperience: "None", agenticExperience: "Beginner",
+    hackathonCount: "4–5 times", englishLevel: "Fluent",
+    desiredRole: "Product Manager", tracks: ["F&B Track"], domain: "AI agents / F&B",
+    skills: [], frameworks: [],
+    aiTools: ["n8n", "OpenAI"], techStack: ["Notion", "Zapier"],
     interests: ["AI agents", "Storytelling", "B2B SaaS"],
-    commitment: "Serious / aiming to win", status: "Looking for a team",
-    bio: "Growth-minded pitcher who frames AI prototypes as fundable products."
+    ideaStage: "Have a concrete idea", ideaDescription: "An AI ops copilot that automates restaurant supply orders.",
+    commitment: "Serious / aiming to win", status: "Looking for a team"
   }
 ];

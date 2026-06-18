@@ -1,0 +1,7 @@
+# Root requirements for the Vercel Python serverless function (api/index.py).
+# Mirrors backend/requirements.txt. uvicorn isn't needed in serverless (Vercel
+# provides the ASGI server) but is harmless to keep for local parity.
+fastapi>=0.115
+supabase>=2.7
+pydantic>=2.7
+python-dotenv>=1.0

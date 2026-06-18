@@ -41,10 +41,17 @@ function sharedSkills(a: string[], b: string[]): string[] {
  * mapped to a realistic-looking 55–98% so the demo UI reads naturally.
  */
 export function computeMatches(me: ProfileFields, pool: PoolProfile[], count = 4): MatchCandidate[] {
+  // Treat languages, frameworks, AI tools and planned stack as one combined skill pool.
+  const mySkills = [
+    ...(me.skills || []), ...(me.frameworks || []), ...(me.aiTools || []), ...(me.techStack || []),
+  ];
+
   const candidates = pool
     .map((p): MatchCandidate => {
-      const jSkills = jaccard(me.skills || [], p.skills);
+      const poolSkills = [...p.skills, ...((p as any).frameworks || []), ...((p as any).techStack || [])];
+      const jSkills = jaccard(mySkills, poolSkills);
       const jInterests = jaccard(me.interests || [], p.interests);
+      const jTracks = jaccard(me.tracks || [], (p as any).tracks || []);
       const domainMatch = tokensOverlap(me.domain, p.domain) ? 1 : 0;
 
       // Role complementarity: ideal if the candidate's role is what the user wants.
@@ -59,10 +66,10 @@ export function computeMatches(me: ProfileFields, pool: PoolProfile[], count = 4
         }
       }
 
-      const score = jSkills * 0.4 + jInterests * 0.2 + domainMatch * 0.15 + roleComp * 0.25;
+      const score = jSkills * 0.38 + jInterests * 0.17 + jTracks * 0.1 + domainMatch * 0.12 + roleComp * 0.23;
       const matchPercent = Math.round(Math.min(98, 55 + score * 43));
 
-      return { ...p, matchPercent, sharedSkills: sharedSkills(me.skills || [], p.skills) };
+      return { ...p, matchPercent, sharedSkills: sharedSkills(mySkills, poolSkills) };
     });
 
   return candidates.sort((a, b) => b.matchPercent - a.matchPercent).slice(0, count);

@@ -7,29 +7,59 @@ from pydantic import BaseModel, Field
 
 
 class ProfileFields(BaseModel):
-    skills: List[str] = Field(default_factory=list)
-    currentRole: str = ""
+    # About you
+    currentRole: str = ""          # background / occupation
+    aiMlExperience: str = ""
+    agenticExperience: str = ""
+    hackathonCount: str = ""
+    englishLevel: str = ""
+    # Skills & stack
+    skills: List[str] = Field(default_factory=list)        # programming languages
+    frameworks: List[str] = Field(default_factory=list)
+    aiTools: List[str] = Field(default_factory=list)
+    techStack: List[str] = Field(default_factory=list)
+    # Team & track
     desiredRole: str = ""
+    tracks: List[str] = Field(default_factory=list)
     domain: str = ""
-    interests: List[str] = Field(default_factory=list)
+    status: str = ""
+    # Idea, goals & links
+    ideaStage: str = ""
+    ideaDescription: str = ""
     goals: str = ""
     commitment: str = ""
     selectionCriteria: str = ""
-    status: str = ""
+    interests: List[str] = Field(default_factory=list)
+    linkedin: str = ""
+    github: str = ""
+    portfolio: str = ""
 
 
 # Required for a meaningful match — Luna chases these "to the end".
-REQUIRED_FOR_MATCH = ["skills", "currentRole", "desiredRole", "domain"]
+REQUIRED_FOR_MATCH = ["skills", "desiredRole"]
 FIELD_LABELS = {
-    "skills": "Skills",
-    "currentRole": "Your role",
-    "desiredRole": "Role you want on the team",
+    "currentRole": "Your background",
+    "aiMlExperience": "Experience in AI / ML",
+    "agenticExperience": "Agentic AI / LLM experience",
+    "hackathonCount": "Hackathons joined before",
+    "englishLevel": "English level",
+    "skills": "Programming languages",
+    "frameworks": "Frameworks",
+    "aiTools": "AI tools you use",
+    "techStack": "Tech stack you plan to use",
+    "desiredRole": "Team role you want",
+    "tracks": "Track interest",
     "domain": "Field / domain",
-    "interests": "Interests",
+    "status": "Status",
+    "ideaStage": "Your idea so far",
+    "ideaDescription": "Idea description",
     "goals": "Your goal",
     "commitment": "Commitment level",
     "selectionCriteria": "What you look for in a teammate",
-    "status": "Status",
+    "interests": "Interests",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "portfolio": "Portfolio / website",
 }
 
 
@@ -67,6 +97,12 @@ class ProfileIn(BaseModel):
 
 class MatchIn(BaseModel):
     userId: str
+
+
+class RequirementIn(BaseModel):
+    userId: str
+    requirement: str
+    count: Optional[int] = 6
 
 
 class GoogleAuthIn(BaseModel):

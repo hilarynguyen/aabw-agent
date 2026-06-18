@@ -21,9 +21,12 @@ def _to_messages(messages):
 
 def _merge(base: ProfileFields, extra: ProfileFields) -> ProfileFields:
     merged = base.model_copy(deep=True)
-    merged.skills = list(dict.fromkeys([*base.skills, *extra.skills]))
-    merged.interests = list(dict.fromkeys([*base.interests, *extra.interests]))
-    for key in ("currentRole", "desiredRole", "domain", "goals", "commitment", "selectionCriteria", "status"):
+    for key in ("skills", "frameworks", "aiTools", "techStack", "tracks", "interests"):
+        merged_list = list(dict.fromkeys([*getattr(base, key), *getattr(extra, key)]))
+        setattr(merged, key, merged_list)
+    for key in ("currentRole", "aiMlExperience", "agenticExperience", "hackathonCount", "englishLevel",
+                "desiredRole", "domain", "status", "ideaStage", "ideaDescription",
+                "goals", "commitment", "selectionCriteria", "linkedin", "github", "portfolio"):
         val = getattr(extra, key)
         if val and str(val).strip():
             setattr(merged, key, val)
@@ -38,8 +41,11 @@ def _extract_and_save(sb, body: ChatIn):
     raw = chat_completion(
         [{"role": "user", "content": last_user}],
         system=("Extract teammate-profile fields the user EXPLICITLY stated. Return ONLY a JSON object "
-                "with keys: skills (array of strings), currentRole, desiredRole, domain, "
-                "interests (array of strings), goals, commitment, selectionCriteria, status. "
+                "with keys: currentRole (their background/occupation), aiMlExperience, agenticExperience, "
+                "hackathonCount, englishLevel, skills (array of programming languages), frameworks (array), "
+                "aiTools (array), techStack (array), desiredRole (team role), tracks (array), domain, status, "
+                "ideaStage, ideaDescription, goals, commitment, selectionCriteria, interests (array), "
+                "linkedin, github, portfolio. "
                 "Use empty string/array for anything not stated. No prose, JSON only."),
         temperature=0,
         response_json=True,

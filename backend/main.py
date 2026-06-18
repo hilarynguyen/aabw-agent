@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config
-from .routers import auth, chat, match, misc, profile
+from .routers import auth, chat, match, misc, profile, requirement
 
 app = FastAPI(title="Hackathon Companion API")
 
@@ -24,6 +24,7 @@ app.include_router(misc.router)
 app.include_router(chat.router)
 app.include_router(profile.router)
 app.include_router(match.router)
+app.include_router(requirement.router)
 app.include_router(auth.router)
 
 # Production: serve the built SPA. (In dev the Vite server serves the frontend.)

@@ -13,6 +13,7 @@ import PerkCarousel from './components/PerkCarousel';
 import LoginScreen from './components/LoginScreen';
 import ProfileOnboarding from './components/ProfileOnboarding';
 import MatchCarousel from './components/MatchCarousel';
+import RequirementPanel from './components/RequirementPanel';
 import { computeMatches, MatchCandidate } from './matching';
 import { ProfileFields, loadProfile, saveProfile, getMissingFields, findMatchesApi } from './profile';
 import { AuthUser, getSessionUser, onAuthChange, signOutSupabase, loadGuest, storeGuest } from './auth';
@@ -175,7 +176,8 @@ export default function App() {
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [profileEditMode, setProfileEditMode] = useState(false);
 
-  // Load the user's profile; show the form on first login. Guests included when ALLOW_GUEST_PROFILE.
+  // Load the user's profile; auto-show the form on first login for signed-in users
+  // only. Guests skip the form entirely (they can still open "Edit profile" manually).
   useEffect(() => {
     if (!user || (user.guest && !ALLOW_GUEST_PROFILE)) {
       setProfile(null);
@@ -185,7 +187,7 @@ export default function App() {
     loadProfile(user.sub).then((p) => {
       if (!active) return;
       setProfile(p);
-      if (!p) {
+      if (!p && !user.guest) {
         setProfileEditMode(false);
         setShowProfileForm(true);
       }
@@ -201,7 +203,7 @@ export default function App() {
   const theme = AGENT_THEME[activeAgent];
 
   // Onboarding Carousel States
-  const [centerAgent, setCenterAgent] = useState<'luna' | 'orbit' | 'sage'>('orbit');
+  const [centerAgent, setCenterAgent] = useState<'luna' | 'orbit' | 'sage'>('luna');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   // Auto-rotate onboarding center card
@@ -236,7 +238,7 @@ export default function App() {
       {
         id: 'l1',
         role: 'assistant',
-        content: `Woohoo! Welcome to the Hackathon, buddy! 🚀 I'm **Luna**, your energetic teammate matching matchmaker! \n\nI've analyzed all **240+ participants** currently wandering around. Tell me: What's your **tech stack**, your preferred **role** (Dev, UI/UX Designer, or Business Pitcher), and what kind of cool idea are you hoping to build? Let's pair you up with absolute stars! ✨`,
+        content: `Woohoo! Welcome to the Hackathon, buddy! 🚀 I'm **Luna**, your energetic teammate matching matchmaker! \n\nI've analyzed all **240+ participants** currently wandering around. Tell me: What's your **tech stack**, your preferred **team role** (Frontend, Backend, AI/Data Engineer, Product Manager, UI/UX Designer, or Business Pitcher), and what kind of cool idea are you hoping to build? Let's pair you up with absolute stars! ✨`,
         timestamp: new Date()
       }
     ],
@@ -297,7 +299,7 @@ export default function App() {
       const rec = new SpeechRecognition();
       rec.continuous = false;
       rec.interimResults = false;
-      rec.lang = 'vi-VN'; // Support Vietnamese voice input query defaults!
+      rec.lang = 'en-US'; // Voice input language
 
       rec.onstart = () => {
         setIsListening(true);
@@ -1394,6 +1396,11 @@ export default function App() {
                 </div>
               </div>
 
+              {activeAgent === 'luna' ? (
+                /* Luna = requirement-driven matching (no chat) */
+                <RequirementPanel user={user} />
+              ) : (
+              <>
               {/* Chat Viewport scrolling block */}
               <div ref={chatViewportRef} className="flex-1 overflow-y-auto pr-2 space-y-4 min-h-0 select-text">
                 <AnimatePresence initial={false}>
@@ -1689,7 +1696,7 @@ export default function App() {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
                     </span>
                     <span className="text-[11px] font-bold text-rose-600 animate-pulse">
-                      Mic Active: Listening in Vietnamese (vi-VN)... Speak now!
+                      Mic Active: Listening... Speak now!
                     </span>
                   </div>
                   
@@ -1792,17 +1799,24 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setInputText("Find a UX Designer who is familiar with Figma and Mobile style to form a crew of 3.")}
+                      onClick={() => setInputText("Find teammates who have built AI agents and shipped them.")}
                       className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
                     >
-                      🔍 Need Designer
+                      🤖 Built AI agents
                     </button>
                     <button
                       type="button"
-                      onClick={() => setInputText("I am a Python developer building a generative agent app. Recommend some React full-stack members!")}
+                      onClick={() => setInputText("Find builders who have shipped a real product before, not just demos.")}
                       className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
                     >
-                      🌟 Recommend React matched member
+                      🚀 Shipped a product
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputText("Find teammates interested in the same hackathon track as me.")}
+                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
+                    >
+                      🎯 Same track as me
                     </button>
                   </>
                 ) : activeAgent === 'orbit' ? (
@@ -1841,6 +1855,8 @@ export default function App() {
                   </>
                 )}
               </div>
+              </>
+              )}
 
             {/* MOBILE BOTTOM NAVIGATION BAR (NESTED INSIDE GLASS CARD FOR PERFECT FLUSH FIT AND NO VISUAL GAPS) */}
             <div className="flex md:hidden justify-around items-center bg-white/95 backdrop-blur-lg border-t border-slate-100/70 py-2 px-2 shrink-0 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] z-20 -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 mt-3.5">

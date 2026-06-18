@@ -12,7 +12,8 @@ interface ProfileOnboardingProps {
   onSkip: (fields: ProfileFields) => void;
 }
 
-const STEP_TITLES = ['Your role', 'Skills & focus', 'Goals & fit'];
+const STEP_TITLES = ['About you', 'Skills & stack', 'Team & track', 'Idea & goals'];
+type Step = 1 | 2 | 3 | 4;
 
 // Chip / tag input for multi-value fields.
 function TagInput({ value, onChange, placeholder }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
@@ -48,7 +49,7 @@ function TagInput({ value, onChange, placeholder }: { value: string[]; onChange:
 
 export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip }: ProfileOnboardingProps) {
   const [fields, setFields] = useState<ProfileFields>(initial ? { ...emptyProfile(), ...initial } : emptyProfile());
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<Step>(1);
 
   const set = (key: keyof ProfileFields, val: string | string[]) =>
     setFields((prev) => ({ ...prev, [key]: val }));
@@ -58,9 +59,14 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
 
   const renderField = (f: FieldConfig) => {
     const val = fields[f.key];
+    // Compact fields (single-line inputs + short chip selects) sit two-per-row on
+    // sm+; wide fields (long chip selects, tag inputs, multiselects, textareas) span
+    // the full width. This keeps every step inside the viewport without scrolling.
+    const isHalf = f.type === 'text' || (f.type === 'select' && (f.options?.length ?? 0) <= 4);
+    const span = isHalf ? 'sm:col-span-1' : 'sm:col-span-2';
     return (
-      <div key={f.key} className="text-left">
-        <label className="block text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+      <div key={f.key} className={`text-left ${span}`}>
+        <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1.5">
           <span>{f.emoji}</span> {f.label}
           {f.requiredForMatch && <span className="text-[9px] uppercase tracking-wider text-violet-400 font-extrabold">· for matching</span>}
         </label>
@@ -85,6 +91,27 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
           </div>
         )}
 
+        {f.type === 'multiselect' && (
+          <div className="flex flex-wrap gap-1.5">
+            {f.options!.map((opt) => {
+              const arr = (val as string[]) || [];
+              const active = arr.includes(opt);
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => set(f.key, active ? arr.filter((v) => v !== opt) : [...arr, opt])}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                    active ? 'bg-violet-500 text-white border-violet-600 shadow-sm' : 'bg-white/80 text-slate-600 border-violet-100 hover:bg-white'
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {f.type === 'multi' && (
           <TagInput value={val as string[]} onChange={(v) => set(f.key, v)} placeholder={f.placeholder} />
         )}
@@ -94,7 +121,7 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
             value={val as string}
             onChange={(e) => set(f.key, e.target.value)}
             placeholder={f.placeholder}
-            className="w-full bg-white/80 border border-violet-100 rounded-2xl px-3 py-2.5 text-[13px] text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400/30"
+            className="w-full bg-white/80 border border-violet-100 rounded-2xl px-3 py-2 text-[13px] text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400/30"
           />
         )}
 
@@ -104,7 +131,7 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
             onChange={(e) => set(f.key, e.target.value)}
             placeholder={f.placeholder}
             rows={2}
-            className="w-full bg-white/80 border border-violet-100 rounded-2xl px-3 py-2.5 text-[13px] text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400/30 resize-none"
+            className="w-full bg-white/80 border border-violet-100 rounded-2xl px-3 py-2 text-[13px] text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-400/30 resize-none"
           />
         )}
       </div>
@@ -120,10 +147,10 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
         initial={{ opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-        className="w-full max-w-lg bg-white/45 backdrop-blur-2xl border border-white/60 rounded-[36px] p-6 sm:p-8 shadow-2xl relative z-10 my-6"
+        className="w-full max-w-lg bg-white/45 backdrop-blur-2xl border border-white/60 rounded-[36px] p-5 sm:p-7 shadow-2xl relative z-10 my-4"
       >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full border-2 border-violet-200 bg-violet-100 overflow-hidden shrink-0 shadow-md animate-floaty">
             <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Luna" alt="Luna" className="w-full h-full object-cover scale-110" referrerPolicy="no-referrer" />
           </div>
@@ -138,7 +165,7 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-2 mb-4">
           {STEP_TITLES.map((t, i) => (
             <div key={t} className="flex-1">
               <div className={`h-1.5 rounded-full transition-all ${i + 1 <= step ? 'bg-gradient-to-r from-violet-400 to-pink-400' : 'bg-slate-200'}`} />
@@ -155,12 +182,12 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.25 }}
-            className="space-y-4 min-h-[230px]"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 min-h-[230px] content-start"
           >
             {stepFields.map(renderField)}
 
-            {step === 3 && (
-              <div className="bg-white/60 border border-violet-100 rounded-2xl p-3">
+            {step === 4 && (
+              <div className="bg-white/60 border border-violet-100 rounded-2xl p-3 sm:col-span-2">
                 <span className="block text-[10px] text-violet-600 font-bold uppercase mb-1 tracking-wider">Luna will match you using</span>
                 <p className="text-[11px] text-slate-600 italic leading-snug">
                   {buildProfileText(fields) || 'Nothing yet — fill a few fields above, or let Luna ask you in chat.'}
@@ -176,7 +203,7 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
         </AnimatePresence>
 
         {/* Actions */}
-        <div className="flex items-center justify-between gap-2 mt-6">
+        <div className="flex items-center justify-between gap-2 mt-5">
           <button
             type="button"
             onClick={() => onSkip(fields)}
@@ -189,16 +216,16 @@ export default function ProfileOnboarding({ initial, isEdit, onComplete, onSkip 
             {step > 1 && (
               <button
                 type="button"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+                onClick={() => setStep((s) => (s - 1) as Step)}
                 className="py-2.5 px-4 rounded-full bg-white/80 border border-slate-200 text-slate-600 text-xs font-bold flex items-center gap-1.5 hover:bg-white active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </button>
             )}
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
+                onClick={() => setStep((s) => (s + 1) as Step)}
                 className="py-2.5 px-5 rounded-full bg-gradient-to-r from-violet-400 to-pink-400 hover:brightness-105 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-violet-300/40 active:scale-95 transition-all"
               >
                 Next <ArrowRight className="w-3.5 h-3.5" />

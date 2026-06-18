@@ -16,15 +16,31 @@ def embeddings_configured() -> bool:
 def build_profile_text(f: ProfileFields) -> str:
     parts: List[str] = []
     if f.currentRole:
-        parts.append(f"Role: {f.currentRole}")
+        parts.append(f"Background: {f.currentRole}")
+    if f.aiMlExperience:
+        parts.append(f"AI/ML experience: {f.aiMlExperience}")
+    if f.agenticExperience:
+        parts.append(f"Agentic AI / LLM experience: {f.agenticExperience}")
     if f.desiredRole:
-        parts.append(f"Wants teammates who are: {f.desiredRole}")
+        parts.append(f"Wants team role: {f.desiredRole}")
+    if f.tracks:
+        parts.append(f"Tracks: {', '.join(f.tracks)}")
     if f.domain:
         parts.append(f"Domain: {f.domain}")
     if f.skills:
-        parts.append(f"Skills: {', '.join(f.skills)}")
+        parts.append(f"Programming languages: {', '.join(f.skills)}")
+    if f.frameworks:
+        parts.append(f"Frameworks: {', '.join(f.frameworks)}")
+    if f.aiTools:
+        parts.append(f"AI tools: {', '.join(f.aiTools)}")
+    if f.techStack:
+        parts.append(f"Tech stack: {', '.join(f.techStack)}")
     if f.interests:
         parts.append(f"Interests: {', '.join(f.interests)}")
+    if f.ideaStage:
+        parts.append(f"Idea stage: {f.ideaStage}")
+    if f.ideaDescription:
+        parts.append(f"Idea: {f.ideaDescription}")
     if f.goals:
         parts.append(f"Goal: {f.goals}")
     if f.commitment:
@@ -37,14 +53,26 @@ def build_profile_text(f: ProfileFields) -> str:
 
 
 def build_seed_text(row: dict) -> str:
+    def s(label: str, val) -> str:
+        if isinstance(val, (list, tuple)):
+            val = ", ".join(val)
+        return f"{label}: {val}" if val else ""
+
     return ". ".join(filter(None, [
-        f"Role: {row.get('role','')}",
-        f"Wants teammates who are: {row.get('desired_role','')}",
-        f"Domain: {row.get('domain','')}",
-        f"Skills: {', '.join(row.get('skills', []))}",
-        f"Interests: {', '.join(row.get('interests', []))}",
-        f"Status: {row.get('status','')}",
-        row.get("bio", ""),
+        s("Background", row.get("role", "")),
+        s("AI/ML experience", row.get("ai_ml_experience", "")),
+        s("Agentic AI / LLM experience", row.get("agentic_experience", "")),
+        s("Wants team role", row.get("desired_role", "")),
+        s("Tracks", row.get("tracks", [])),
+        s("Domain", row.get("domain", "")),
+        s("Programming languages", row.get("skills", [])),
+        s("Frameworks", row.get("frameworks", [])),
+        s("AI tools", row.get("ai_tools", [])),
+        s("Tech stack", row.get("tech_stack", [])),
+        s("Interests", row.get("interests", [])),
+        s("Idea stage", row.get("idea_stage", "")),
+        s("Idea", row.get("idea_description", "")),
+        s("Status", row.get("status", "")),
     ]))
 
 

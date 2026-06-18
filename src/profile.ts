@@ -6,15 +6,32 @@
 // runs end-to-end without a database.
 
 export interface ProfileFields {
-  skills: string[];
-  currentRole: string;
+  // Step 1 — About you
+  currentRole: string;        // background / occupation
+  aiMlExperience: string;
+  agenticExperience: string;
+  hackathonCount: string;
+  englishLevel: string;
+  // Step 2 — Skills & stack
+  skills: string[];           // programming languages
+  frameworks: string[];
+  aiTools: string[];
+  techStack: string[];
+  // Step 3 — Team & track
   desiredRole: string;
+  tracks: string[];
   domain: string;
-  interests: string[];
+  status: string;
+  // Step 4 — Idea, goals & links
+  ideaStage: string;
+  ideaDescription: string;
   goals: string;
   commitment: string;
   selectionCriteria: string;
-  status: string;
+  interests: string[];
+  linkedin: string;
+  github: string;
+  portfolio: string;
 }
 
 export type ProfileFieldKey = keyof ProfileFields;
@@ -22,40 +39,73 @@ export type ProfileFieldKey = keyof ProfileFields;
 export interface FieldConfig {
   key: ProfileFieldKey;
   label: string;
-  type: 'text' | 'textarea' | 'multi' | 'select';
+  type: 'text' | 'textarea' | 'multi' | 'select' | 'multiselect';
   emoji: string;
   placeholder?: string;
   options?: string[];
   requiredForMatch?: boolean;
-  step: 1 | 2 | 3;
+  step: 1 | 2 | 3 | 4;
 }
 
 // Single source of truth for the form, the missing-field detector and Luna's prompt.
 export const PROFILE_FIELDS: FieldConfig[] = [
-  { key: 'currentRole', label: 'Your role', emoji: '🧑‍💻', type: 'select', step: 1, requiredForMatch: true,
-    options: ['Developer', 'Designer', 'Business / Pitch', 'Other'] },
-  { key: 'desiredRole', label: 'Role you want on the team', emoji: '🤝', type: 'select', step: 1, requiredForMatch: true,
-    options: ['Developer', 'Designer', 'Business / Pitch', 'Anyone complementary'] },
-  { key: 'status', label: 'Status', emoji: '🔎', type: 'select', step: 1,
-    options: ['Looking for a team', 'Have a team, open to more', 'Just exploring'] },
-  { key: 'skills', label: 'Skills', emoji: '🛠️', type: 'multi', step: 2, requiredForMatch: true,
-    placeholder: 'e.g. React, Python, Figma…' },
-  { key: 'domain', label: 'Field / domain', emoji: '🌐', type: 'text', step: 2, requiredForMatch: true,
-    placeholder: 'e.g. AI agents, FinTech, Web3, Mobile games' },
+  // Step 1 — About you
+  { key: 'currentRole', label: 'Your background', emoji: '🧑‍💻', type: 'select', step: 1,
+    options: ['Student', 'Developer', 'AI Engineer', 'Professor', 'Researcher', 'Founder', 'Other'] },
+  { key: 'aiMlExperience', label: 'Experience in AI / ML', emoji: '🧠', type: 'select', step: 1,
+    options: ['None', '< 1 year', '1–2 years', '3–5 years', '5+ years'] },
+  { key: 'agenticExperience', label: 'Agentic AI / LLM experience', emoji: '🤖', type: 'select', step: 1,
+    options: ['None', 'Beginner', 'Intermediate', 'Advanced'] },
+  { key: 'hackathonCount', label: 'Hackathons joined before', emoji: '🏆', type: 'select', step: 1,
+    options: ['First time', '2–3 times', '4–5 times', '6+ times'] },
+  { key: 'englishLevel', label: 'English level', emoji: '💬', type: 'select', step: 1,
+    options: ['Basic', 'Conversational', 'Fluent', 'Native'] },
+  // Step 2 — Skills & stack
+  { key: 'skills', label: 'Programming languages', emoji: '⌨️', type: 'multi', step: 2, requiredForMatch: true,
+    placeholder: 'e.g. Python, TypeScript, Go…' },
+  { key: 'frameworks', label: 'Frameworks', emoji: '🧩', type: 'multi', step: 2,
+    placeholder: 'e.g. React, FastAPI, PyTorch, LangChain…' },
+  { key: 'aiTools', label: 'AI tools you use', emoji: '🛠️', type: 'multi', step: 2,
+    placeholder: 'e.g. n8n, OpenAI, AWS, Qwen, Hugging Face…' },
+  { key: 'techStack', label: 'Tech stack you plan to use', emoji: '🧱', type: 'multi', step: 2,
+    placeholder: 'e.g. Next.js, Supabase, Vercel…' },
   { key: 'interests', label: 'Interests', emoji: '✨', type: 'multi', step: 2,
     placeholder: 'e.g. LLMs, design systems, growth…' },
-  { key: 'goals', label: 'Your goal', emoji: '🎯', type: 'textarea', step: 3,
-    placeholder: 'Win a prize? Learn a new stack? Build a fun prototype?' },
-  { key: 'commitment', label: 'Commitment level', emoji: '🔥', type: 'select', step: 3,
+  // Step 3 — Team & track
+  { key: 'desiredRole', label: 'Team role you want', emoji: '🤝', type: 'select', step: 3, requiredForMatch: true,
+    options: ['Frontend', 'Backend', 'AI/Data Engineer', 'Product Manager', 'UI/UX Designer', 'Business Pitcher', 'Anyone complementary'] },
+  { key: 'tracks', label: 'Track interest', emoji: '🎯', type: 'multiselect', step: 3,
+    options: ['Mobility Track', 'Real Estate Track', 'F&B Track', 'Gaming Track', 'Retail Track', 'Aviation Track', 'Not defined yet'] },
+  { key: 'domain', label: 'Field / domain', emoji: '🌐', type: 'text', step: 3,
+    placeholder: 'e.g. AI agents, FinTech, Web3, Mobile games' },
+  { key: 'status', label: 'Status', emoji: '🔎', type: 'select', step: 3,
+    options: ['Looking for a team', 'Have a team, open to more', 'Just exploring'] },
+  { key: 'linkedin', label: 'LinkedIn', emoji: '🔗', type: 'text', step: 3,
+    placeholder: 'https://linkedin.com/in/you' },
+  { key: 'github', label: 'GitHub', emoji: '🐙', type: 'text', step: 3,
+    placeholder: 'https://github.com/you' },
+  { key: 'portfolio', label: 'Portfolio / website', emoji: '🌟', type: 'text', step: 3,
+    placeholder: 'https://your-portfolio.com' },
+  // Step 4 — Idea & goals
+  { key: 'ideaStage', label: 'Your idea so far', emoji: '💡', type: 'select', step: 4,
+    options: ['Have a concrete idea', 'Rough idea', 'Looking for a team with an idea', 'No idea yet'] },
+  { key: 'commitment', label: 'Commitment level', emoji: '🔥', type: 'select', step: 4,
     options: ['Casual / for fun', 'Serious / aiming to win', 'All-in 🚀'] },
-  { key: 'selectionCriteria', label: 'What you look for in a teammate', emoji: '💝', type: 'textarea', step: 3,
+  { key: 'ideaDescription', label: 'Describe your idea (optional)', emoji: '📝', type: 'textarea', step: 4,
+    placeholder: 'A sentence or two about what you want to build…' },
+  { key: 'goals', label: 'Your goal', emoji: '⭐', type: 'textarea', step: 4,
+    placeholder: 'Win a prize? Learn a new stack? Build a fun prototype?' },
+  { key: 'selectionCriteria', label: 'What you look for in a teammate', emoji: '💝', type: 'textarea', step: 4,
     placeholder: 'e.g. reliable, ships fast, good communicator, design taste…' },
 ];
 
 export function emptyProfile(): ProfileFields {
   return {
-    skills: [], currentRole: '', desiredRole: '', domain: '',
-    interests: [], goals: '', commitment: '', selectionCriteria: '', status: '',
+    currentRole: '', aiMlExperience: '', agenticExperience: '', hackathonCount: '', englishLevel: '',
+    skills: [], frameworks: [], aiTools: [], techStack: [],
+    desiredRole: '', tracks: [], domain: '', status: '',
+    ideaStage: '', ideaDescription: '', goals: '', commitment: '', selectionCriteria: '',
+    interests: [], linkedin: '', github: '', portfolio: '',
   };
 }
 
@@ -76,11 +126,19 @@ export function isProfileComplete(profile: ProfileFields): boolean {
 // and as the text we would embed in Phase 2.
 export function buildProfileText(profile: ProfileFields): string {
   const parts: string[] = [];
-  if (profile.currentRole) parts.push(`Role: ${profile.currentRole}`);
-  if (profile.desiredRole) parts.push(`Wants teammates who are: ${profile.desiredRole}`);
+  if (profile.currentRole) parts.push(`Background: ${profile.currentRole}`);
+  if (profile.aiMlExperience) parts.push(`AI/ML experience: ${profile.aiMlExperience}`);
+  if (profile.agenticExperience) parts.push(`Agentic AI / LLM experience: ${profile.agenticExperience}`);
+  if (profile.desiredRole) parts.push(`Wants team role: ${profile.desiredRole}`);
+  if (profile.tracks.length) parts.push(`Tracks: ${profile.tracks.join(', ')}`);
   if (profile.domain) parts.push(`Domain: ${profile.domain}`);
-  if (profile.skills.length) parts.push(`Skills: ${profile.skills.join(', ')}`);
+  if (profile.skills.length) parts.push(`Programming languages: ${profile.skills.join(', ')}`);
+  if (profile.frameworks.length) parts.push(`Frameworks: ${profile.frameworks.join(', ')}`);
+  if (profile.aiTools.length) parts.push(`AI tools: ${profile.aiTools.join(', ')}`);
+  if (profile.techStack.length) parts.push(`Tech stack: ${profile.techStack.join(', ')}`);
   if (profile.interests.length) parts.push(`Interests: ${profile.interests.join(', ')}`);
+  if (profile.ideaStage) parts.push(`Idea stage: ${profile.ideaStage}`);
+  if (profile.ideaDescription) parts.push(`Idea: ${profile.ideaDescription}`);
   if (profile.goals) parts.push(`Goal: ${profile.goals}`);
   if (profile.commitment) parts.push(`Commitment: ${profile.commitment}`);
   if (profile.selectionCriteria) parts.push(`Looks for: ${profile.selectionCriteria}`);
