@@ -44,6 +44,23 @@ create table if not exists profiles (
 create index if not exists profiles_embedding_idx
   on profiles using hnsw (embedding vector_cosine_ops);
 
+-- ---------------------------------------------------------------------------
+-- Expanded profile columns. MUST run BEFORE match_profiles below, since the
+-- function selects these columns. Safe to run repeatedly on existing databases.
+-- ---------------------------------------------------------------------------
+alter table profiles add column if not exists github             text   default '';
+alter table profiles add column if not exists portfolio          text   default '';
+alter table profiles add column if not exists ai_ml_experience   text   default '';
+alter table profiles add column if not exists agentic_experience text   default '';
+alter table profiles add column if not exists hackathon_count    text   default '';
+alter table profiles add column if not exists english_level      text   default '';
+alter table profiles add column if not exists tracks             text[] default '{}';
+alter table profiles add column if not exists frameworks         text[] default '{}';
+alter table profiles add column if not exists ai_tools           text[] default '{}';
+alter table profiles add column if not exists tech_stack         text[] default '{}';
+alter table profiles add column if not exists idea_stage         text   default '';
+alter table profiles add column if not exists idea_description   text   default '';
+
 -- Ranked match: cosine similarity (1 - distance), excluding self and unembedded rows.
 -- DROP first because the RETURNS TABLE signature changed (Postgres can't REPLACE that).
 drop function if exists match_profiles(vector, int, text);
@@ -73,21 +90,3 @@ as $$
   order by p.embedding <=> query_embedding
   limit match_count;
 $$;
-
--- ---------------------------------------------------------------------------
--- Migration for existing databases created before the expanded profile fields.
--- Safe to run repeatedly. The match_profiles RPC is unchanged — the new fields
--- enrich profile_text/embedding, which is what matching uses.
--- ---------------------------------------------------------------------------
-alter table profiles add column if not exists github             text   default '';
-alter table profiles add column if not exists portfolio          text   default '';
-alter table profiles add column if not exists ai_ml_experience   text   default '';
-alter table profiles add column if not exists agentic_experience text   default '';
-alter table profiles add column if not exists hackathon_count    text   default '';
-alter table profiles add column if not exists english_level      text   default '';
-alter table profiles add column if not exists tracks             text[] default '{}';
-alter table profiles add column if not exists frameworks         text[] default '{}';
-alter table profiles add column if not exists ai_tools           text[] default '{}';
-alter table profiles add column if not exists tech_stack         text[] default '{}';
-alter table profiles add column if not exists idea_stage         text   default '';
-alter table profiles add column if not exists idea_description   text   default '';
