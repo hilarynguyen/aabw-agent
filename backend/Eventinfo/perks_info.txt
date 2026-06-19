@@ -1,0 +1,35 @@
+At Agentic AI Build Week (AABW) 2026, organizers and sponsors are providing a massive support package worth over $1,000,000 in total credits and perks. Each verified builder can access a tool stack valued at over $10,000+.
+
+Here is the breakdown of the credits you will receive right from Day 1 and exactly how to claim them:
+
+Summary of Credits & Perks (Available from Day 1)
+Every eligible builder will instantly receive infrastructure and tool packages, including:
+
+OpenAI: $150 in OpenAI credits and 3 months of ChatGPT Plus for free.
+
+Kimi (Moonshot AI): $10 in Kimi credits, specifically optimized for long-context reasoning and deep research tasks.
+
+n8n: Access to an n8n Cloud Pro account to design and automate production-ready agentic workflows.
+
+TinyFish: 1,650 credits (equivalent to a 1-month Starter Plan) for serverless web agent infrastructure and automation.
+
+Bright Data: $100 in API credits for real-time web intelligence and data extraction.
+
+ZenRows: 1 month of the Developer Plan (includes 250K basic requests and 10K protected requests) for web scraping.
+
+Apify: $25 in platform credits for web scraping and browser automation.
+
+Daytona: $100 in Daytona credits to spin up instant, standardized development environments.
+
+Agora: $30 in Agora credits for real-time voice, video, and interactive features.
+
+How to Claim Your Credits
+To activate these perks, you must complete the following mandatory steps:
+
+Step 1 - Discord Verification: Run the command /verify [your_luma_registration_email] in the event's Discord server to unlock your "Builder" role.
+
+Step 2 - Register on Devpost: Go to the official Agentic AI Build Week 2026 Devpost page and register for the hackathon.
+
+Step 3 - Lock in Your Track: Once you form or join a team on Devpost, you must select and lock in your specific track. The organizers will distribute the voucher codes and activate platform access based on this locked list.
+
+🎁 Bonus Opportunity: > If you sign up on Devpost and attend the Buildathon Briefing Webinar on June 23, 2026, at 2:00 PM Vietnam Time, you will be entered into a lucky draw to win up to $250 in additional OpenAI credits.

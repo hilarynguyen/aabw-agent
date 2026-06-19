@@ -1747,7 +1747,7 @@ export default function App() {
                                   const claimConfirmedMsg: ChatMessage = {
                                     id: 'claimed-' + Math.random().toString(),
                                     role: 'assistant',
-                                    content: `🎁 Nice grab! You've unlocked **${perkTitle}** from **${sponsor}**. Copy the promo code on the card and redeem it via the link. Want me to find perks for another part of your stack?`,
+                                    content: `🎁 Nice grab! **${perkTitle}** from **${sponsor}** is on your list. All perks unlock together — verify on Discord (\`/verify [your Luma email]\`), register on Devpost, and lock your track. Want me to find perks for another part of your stack?`,
                                     timestamp: new Date()
                                   };
                                   setChats(prev => ({

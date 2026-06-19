@@ -114,20 +114,24 @@ export default function PerkCarousel({ perks, onClaimed }: PerkCarouselProps) {
                     className="w-full overflow-hidden"
                   >
                     <div className="mt-3 w-full bg-white/80 rounded-2xl p-3 border border-amber-200 text-left">
-                      <span className="block text-[9px] uppercase tracking-widest font-extrabold text-amber-700 mb-1">Your promo code</span>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 font-mono text-[13px] font-bold text-slate-800 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100 tracking-wide">
-                          {current.code}
-                        </code>
-                        <button
-                          onClick={copyCode}
-                          title="Copy code"
-                          className="p-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-90 transition-all shrink-0"
-                        >
-                          {copiedId === current.id ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-medium mt-2 leading-snug">{current.howToClaim}</p>
+                      <span className="block text-[9px] uppercase tracking-widest font-extrabold text-amber-700 mb-1">
+                        {current.code ? 'Your promo code' : 'How to claim'}
+                      </span>
+                      {current.code && (
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 font-mono text-[13px] font-bold text-slate-800 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100 tracking-wide">
+                            {current.code}
+                          </code>
+                          <button
+                            onClick={copyCode}
+                            title="Copy code"
+                            className="p-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-90 transition-all shrink-0"
+                          >
+                            {copiedId === current.id ? <Check className="w-4 h-4 stroke-[2.5]" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-slate-500 font-medium mt-2 leading-snug whitespace-pre-line">{current.howToClaim}</p>
                     </div>
                   </motion.div>
                 )}
