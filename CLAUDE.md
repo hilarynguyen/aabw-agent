@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 "Hackathon Companion" — a **React/Vite SPA + FastAPI (Python) backend** (originally scaffolded by Google AI Studio, since migrated off Node/Gemini). Pastel/glassmorphic, cute, character-driven UI. Three persona-driven agents:
 - **Luna** — teammate matching. **Requirement-driven page** (not chat): the user types who they're looking for → the text is embedded → **pgvector cosine search** over Supabase profiles → ranked candidates with a **match %** (swipeable cards + a filterable ranked "overview" list).
 - **Orbit** — logistics/schedule **chat** answering from the real **AGENTIC AI BUILD WEEK 2026** reference, plus a **`set_reminder` LLM function-tool** that schedules deadline reminders sent for real via **Gmail / Telegram** (Supabase row + AWS EventBridge Scheduler → Lambda).
-- **Sage** — sponsor **perk discovery chat** (API/cloud credits, promo codes).
+- **Sage** — sponsor **perk discovery chat** for the real AABW 2026 perks (OpenAI, Kimi, n8n, TinyFish, Bright Data, ZenRows, Apify, Daytona, Agora). No per-perk promo codes — all unlock via one flow (Discord `/verify` → Devpost → lock track).
 
 Implemented this iteration (all documented in detail in the sections below):
 - **Auth** = Supabase Auth (Google OAuth) with a local **guest** fallback; app gated behind a login screen.
@@ -20,7 +20,7 @@ Implemented this iteration (all documented in detail in the sections below):
 It's a cute web app that helps people at a hackathon. After signing in (Google), you fill a short profile. Then:
 - **Luna** finds you teammates: you type *what kind of person you need*, and the app shows a ranked list of matching people with a "% match" score. (Behind the scenes it turns text into numbers — "embeddings" — and finds the most similar people. Think "dating-app matching, but for teammates.")
 - **Orbit** is a chatbot that answers real questions about the AGENTIC AI BUILD WEEK 2026 event (deadlines, workshops, venues, judges) and can **actually schedule a deadline reminder** to be emailed or sent to Telegram before the deadline.
-- **Sage** is a chatbot that tells you which sponsor freebies (free API/cloud credits, tools) you can grab, with promo codes.
+- **Sage** is a chatbot that tells you which real sponsor freebies (OpenAI, n8n, Bright Data, etc.) you can grab and how to claim them (verify on Discord → register on Devpost → lock your track).
 
 The "brain" (AI) runs through a service called **OpenRouter**; user data + the matching live in a **Supabase** database. If those aren't set up, the app still runs in a demo mode using fake/sample data.
 
@@ -74,7 +74,7 @@ The agents are instructed to append special tags to their text replies, which th
 | Tag (in model reply) | Parsed in `App.tsx` (`parseMessageResponse`) | Renders |
 |---|---|---|
 | `[TEAMMATES_CAROUSEL: ["t1","t2"]]` | `teamMatchIds` | `TeammateCarousel` of matching `TEAMMATES` |
-| `[SAGE_PERKS: ["p1","p2"]]` | `perkIds` | `PerkCarousel` of matching `PERKS` (sponsor perks w/ promo codes) |
+| `[SAGE_PERKS: ["p1","p2"]]` | `perkIds` | `PerkCarousel` of matching `PERKS` (real AABW sponsor perks; cards show a "How to claim" panel, no promo codes) |
 | `[REMINDER_TRIGGER: {"title","time","location","icon"}]` | `reminderConfig` | Opens the in-chat reminder scheduler widget |
 | `[FIND_MATCHES]` | `findMatches` | Runs teammate matching → `MatchCarousel` of ranked candidates with a match % |
 
