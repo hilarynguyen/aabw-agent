@@ -115,3 +115,26 @@ class ReminderIn(BaseModel):
     location: Optional[str] = None
     channel: Optional[str] = None
     recipient: Optional[str] = None
+
+
+class ScheduleReminderIn(BaseModel):
+    """Body for POST /api/reminders/schedule — sent when the user submits the form."""
+    deadline: str                        # ISO datetime OR event milestone name
+    channel: str                         # 'email' | 'telegram'
+    recipient: str                       # email address or telegram @username / chat id
+    leadMinutes: Optional[int] = None    # minutes before deadline to fire (default in config)
+    title: Optional[str] = None
+    location: Optional[str] = None
+    userId: Optional[str] = None
+
+
+class ScheduledReminder(BaseModel):
+    """Confirmation returned to the frontend after a reminder is scheduled."""
+    id: str
+    title: str
+    channel: str
+    recipient: str
+    deadline: Optional[str] = None       # ISO
+    fireAt: str                          # ISO
+    location: str = ""
+    scheduled: bool = False              # True when an AWS schedule was created

@@ -4,3 +4,4 @@ supabase>=2.7
 pydantic>=2.7
 python-dotenv>=1.0
 # Chat + embeddings go through OpenRouter over plain HTTP (stdlib urllib) — no SDK needed.
+boto3>=1.34   # AWS EventBridge Scheduler + Lambda for deadline reminders (Orbit)

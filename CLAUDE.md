@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Hackathon Companion" — a **React/Vite SPA + FastAPI (Python) backend** (originally scaffolded by Google AI Studio, since migrated off Node/Gemini). Pastel/glassmorphic, cute, character-driven UI. Three persona-driven agents:
 - **Luna** — teammate matching. **Requirement-driven page** (not chat): the user types who they're looking for → the text is embedded → **pgvector cosine search** over Supabase profiles → ranked candidates with a **match %** (swipeable cards + a filterable ranked "overview" list).
-- **Orbit** — logistics/schedule **chat** + in-chat reminder scheduler widget.
+- **Orbit** — logistics/schedule **chat** answering from the real **AGENTIC AI BUILD WEEK 2026** reference, plus a **`set_reminder` LLM function-tool** that schedules deadline reminders sent for real via **Gmail / Telegram** (Supabase row + AWS EventBridge Scheduler → Lambda).
 - **Sage** — sponsor **perk discovery chat** (API/cloud credits, promo codes).
 
 Implemented this iteration (all documented in detail in the sections below):
@@ -19,7 +19,7 @@ Implemented this iteration (all documented in detail in the sections below):
 ### In plain English (for non-technical readers)
 It's a cute web app that helps people at a hackathon. After signing in (Google), you fill a short profile. Then:
 - **Luna** finds you teammates: you type *what kind of person you need*, and the app shows a ranked list of matching people with a "% match" score. (Behind the scenes it turns text into numbers — "embeddings" — and finds the most similar people. Think "dating-app matching, but for teammates.")
-- **Orbit** is a chatbot that answers schedule/venue questions and can set reminders.
+- **Orbit** is a chatbot that answers real questions about the AGENTIC AI BUILD WEEK 2026 event (deadlines, workshops, venues, judges) and can **actually schedule a deadline reminder** to be emailed or sent to Telegram before the deadline.
 - **Sage** is a chatbot that tells you which sponsor freebies (free API/cloud credits, tools) you can grab, with promo codes.
 
 The "brain" (AI) runs through a service called **OpenRouter**; user data + the matching live in a **Supabase** database. If those aren't set up, the app still runs in a demo mode using fake/sample data.
@@ -38,7 +38,12 @@ The "brain" (AI) runs through a service called **OpenRouter**; user data + the m
 - **End-to-end real-data not yet verified**: the Supabase vector write path (`/api/seed`, `/api/profile`, `/api/requirement`) hasn't been run successfully with live keys yet — watch for `invalid input syntax for type vector` and adjust `vec_to_pg` ([backend/embeddings.py](backend/embeddings.py)) if it errors.
 - **Security**: the service-role key is currently read as `VITE_SUPABASE_SERVICE_ROLE_KEY` ([backend/config.py](backend/config.py), [backend/deps.py](backend/deps.py)) — the `VITE_` prefix risks leaking a secret to the browser; rename to `SUPABASE_SERVICE_ROLE_KEY`. Also the backend **trusts `userId` from the client** (no Supabase JWT verification) — fine for a demo, not for production.
 - **Dead code**: `runMatch` / `[FIND_MATCHES]` chat path in `App.tsx` is unused now that Luna is requirement-driven (harmless; clean up).
-- **Polish/quality**: no automated tests; chat sends full history every turn (no window → token cost); Orbit/Sage chat isn't persisted; image attachments aren't truly multimodal; reminders are a mock webhook (no real send).
+- **Polish/quality**: no automated tests; chat sends full history every turn (no window → token cost); Orbit/Sage chat isn't persisted; image attachments aren't truly multimodal.
+
+**🆕 Orbit event Q&A + real reminders (this iteration)**
+- Orbit answers from [backend/Eventinfo/agentic_ai_building_week_info.txt](backend/Eventinfo/agentic_ai_building_week_info.txt) (loaded by [backend/eventinfo.py](backend/eventinfo.py), embedded into its prompt) instead of the old mock schedule.
+- New **`open_reminder_form` function-tool** (OpenAI-style tool-calling via `chat_with_tools` in [backend/llm.py](backend/llm.py); Orbit uses `OPENROUTER_TOOL_MODEL` = Qwen3-235B since the free chat model may not support tools). When the user wants a reminder, Orbit only needs to resolve the **`deadline`** — the tool returns a `reminderDraft` that pops the in-chat **form** (channel + recipient + lead-time presets). Submitting the form calls **`POST /api/reminders/schedule`**, which inserts a `reminders` row + creates a **one-shot AWS EventBridge schedule** ([backend/aws_scheduler.py](backend/aws_scheduler.py)) firing the **reminder Lambda** ([aws/lambda_reminder/](aws/lambda_reminder/)) at `fire_at = deadline − leadMinutes` (default 60).
+- The Lambda does the actual **Gmail SMTP / Telegram Bot API** send; its secrets live only on the Lambda. Everything degrades to "simulated" when AWS/Supabase keys are missing.
 
 ## Commands
 
@@ -50,6 +55,8 @@ The "brain" (AI) runs through a service called **OpenRouter**; user data + the m
 - Backend deps: `pip install -r backend/requirements.txt`. Python syntax check: `python -m py_compile backend/*.py backend/routers/*.py`.
 
 Env in root `.env` (loaded by both Vite and the backend): `OPENROUTER_API_KEY` (chat + embeddings, both via OpenRouter), `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (client auth), `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (server: profile storage + pgvector). All clients are **lazy + graceful-degrade**: missing env → the app still boots and the affected route returns 503 / falls back.
+
+**Orbit reminders (deadline scheduling).** Server env: `OPENROUTER_TOOL_MODEL` (tool-calling model for Orbit's `set_reminder`; default `qwen/qwen3-235b-a22b` — the free chat model may not support tools), `REMINDER_DEFAULT_LEAD_MINUTES` (default 60), and AWS — `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `REMINDER_LAMBDA_ARN`, `EVENTBRIDGE_SCHEDULER_ROLE_ARN`. Orbit's `set_reminder` tool ([backend/routers/chat.py](backend/routers/chat.py)) inserts a row into the Supabase `reminders` table ([supabase/schema.sql](supabase/schema.sql)) and creates a one-shot AWS **EventBridge Scheduler** schedule ([backend/aws_scheduler.py](backend/aws_scheduler.py)) that fires the reminder **Lambda** ([aws/lambda_reminder/](aws/lambda_reminder/)) at `fire_at = deadline − lead`. The Lambda sends the actual **Gmail (SMTP)** / **Telegram (Bot API)** message — its secrets (`GMAIL_USER`, `GMAIL_APP_PASSWORD`, `TELEGRAM_BOT_TOKEN`, plus Supabase URL/service key) live **only on the Lambda**, never the SPA backend. Event Q&A facts come from [backend/Eventinfo/agentic_ai_building_week_info.txt](backend/Eventinfo/agentic_ai_building_week_info.txt) via [backend/eventinfo.py](backend/eventinfo.py), embedded into Orbit's prompt. Missing AWS/Supabase config → the reminder is stored/logged as "simulated" and the app still works.
 
 ## Architecture
 
@@ -85,13 +92,14 @@ Flow: the form `POST`s to `/api/profile` (Supabase upsert + OpenRouter Qwen3-Emb
 **Graceful fallback (no Supabase/backend):** `loadProfile`/`saveProfile` fall back to `localStorage` and matching falls back to the client-side heuristic `computeMatches` ([src/matching.ts](src/matching.ts)) over `MOCK_PROFILES` ([src/mockData.ts](src/mockData.ts)). Guests are gated by `ALLOW_GUEST_PROFILE` in `App.tsx` (currently `true` for demos).
 
 ### Backend routes (FastAPI — [backend/](backend/))
-- `POST /api/chat` — `{ agentId, messages, userId?, userProfile? }` → `{ reply, matches? }`. Builds the agent prompt ([backend/prompts.py](backend/prompts.py)), calls the OpenRouter chat model ([backend/llm.py](backend/llm.py), `chat_completion`); for Luna also extracts/saves profile fields and returns pgvector `matches` on `[FIND_MATCHES]`.
+- `POST /api/chat` — `{ agentId, messages, userId?, userProfile? }` → `{ reply, matches?, reminderDraft? }`. Builds the agent prompt ([backend/prompts.py](backend/prompts.py)), calls the OpenRouter chat model ([backend/llm.py](backend/llm.py), `chat_completion`); for Luna also extracts/saves profile fields and returns pgvector `matches` on `[FIND_MATCHES]`. **Orbit** instead runs `chat_with_tools` with the `open_reminder_form` tool and returns `reminderDraft` (resolved deadline) to open the in-chat reminder form.
+- `POST /api/reminders/schedule` — `{ deadline, channel, recipient, leadMinutes?, title?, location?, userId? }` → resolves the deadline, persists a `reminders` row, creates the one-shot EventBridge schedule, returns the confirmed `ScheduledReminder`. Called when the user submits the Orbit reminder form.
 - `GET /api/profile/{userId}` → `{ profile|null }`; `POST /api/profile` → upsert + embed, returns `{ profile, missing[] }`.
 - `POST /api/match` → `{ userId }` → `{ matches }` (pgvector cosine vs the user's own profile).
 - `POST /api/requirement` → `{ userId, requirement, count? }` → saves the requirement, embeds it, returns `{ matches }` ranked by similarity to that text (powers the Luna page).
 - `POST /api/seed` — seeds the 8 candidate profiles (with embeddings); no-op if present.
 - **Auth = Supabase Auth** (client-side, [src/auth.ts](src/auth.ts)): `supabase.auth.signInWithOAuth({ provider: 'google' })`; supabase-js handles the OAuth redirect + session. The Supabase user `id` (uuid) becomes `profiles.user_id`. App gated behind [src/components/LoginScreen.tsx](src/components/LoginScreen.tsx); a local **guest** mode (no Supabase session) persists in `localStorage`. Client env: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`. The backend `POST /api/auth/google` (GIS verify) is **legacy/unused**.
-- `POST /api/reminders/trigger` — mock webhook (logs + echoes). `GET /api/health`.
+- `POST /api/reminders/trigger` — manual/fallback path (the in-chat scheduler widget): fires a reminder NOW (persists a `reminders` row + invokes the Lambda for email/telegram, else logs simulated). `GET /api/reminders/{userId}` lists a user's reminders. `GET /api/health`.
 - Supabase access is **server-only** (service-role key); `role` column is used instead of the reserved `current_role`. Schema: [supabase/schema.sql](supabase/schema.sql).
 
 ### Frontend (`src/App.tsx`)

@@ -1,0 +1,456 @@
+================================================================================
+AGENTIC AI BUILD WEEK 2026 - OFFICIAL REFERENCE GUIDE
+Hosted by GenAI Fund | Location: Ho Chi Minh City, Vietnam
+================================================================================
+
+================================================================================
+1. CRITICAL DEADLINES & KEY DATES (All times in GMT+7)
+================================================================================
+
+BUILDER EXPERIENCE TRACK SUBMISSION
+Date: June 20, 2026
+Description: Last day to submit AI tools, agents, or workflows that improve AABW builder experience (e.g., team matching, copilots). Submissions close TODAY.
+Track Status: First-come, first-served basis with 60 team maximum capacity per track
+
+BUILDATHON BRIEFING WEBINAR
+Date: June 23, 2026
+Time: 2:00 PM (GMT+7)
+Topics Covered:
+  - Buildathon schedule walkthrough
+  - Team setup instructions
+  - Track details and specifications
+  - Judging criteria overview
+  - Announcement of top 20 Builder Experience tools
+
+BUILDER EXPERIENCE COMMUNITY VOTE
+Dates: June 23 - June 29, 2026
+Description: Community voting window to select the winning pre-event tool. Results inform live deployment during hackathon.
+
+BUILDER EXPERIENCE WINNER ANNOUNCED
+Date: July 1, 2026
+Description: Winning tool announced and prepared for live deployment during hackathon week.
+
+PROBLEM STATEMENTS RELEASED + TECH/AI PERKS CLAIM WINDOW
+Date: July 1, 2026
+Details: 
+  - Official problem statements released for all tracks
+  - Builders can claim their technology and AI platform perks
+  - Begin reviewing track-specific challenges
+
+HACKATHON KICKOFF (DAY 1)
+Date: July 8, 2026
+Location: RMIT Vietnam
+Details: Official start of 5-day hackathon. Academic frameworks and agent design workshops hosted.
+
+AWS WORKSHOP DAY (DAY 2)
+Date: July 9, 2026
+Location: AWS Office, Bitexco Tower, Ho Chi Minh City
+Focus: Enterprise architecture and deployment playbook training
+
+DEVPOST TRACK CONFIRMATION DEADLINE
+Date: July 10, 2026
+Time: 9:00 PM (GMT+7)
+Details: Final deadline to confirm your team's track selection on Devpost platform
+Action Required: All teams must finalize track choice before this deadline
+
+ON-SITE BUILDING DAY (DAY 3)
+Date: July 11, 2026
+Location: Ho Chi Minh City, Vietnam
+Details: Intensive hands-on enterprise guidance and architectural deep dives with industry mentors
+
+SUBMISSION DEADLINE
+Date: July 12, 2026
+Time: 9:00 AM (GMT+7)
+Platform: Devpost
+Details: Final deadline to submit all project deliverables, code, and documentation
+Critical: No submissions accepted after this time
+
+DEMO DAY & AWARD CEREMONY
+Date: July 12, 2026
+Details:
+  - Live product demonstrations by all teams
+  - Judge evaluations and feedback
+  - Official awards and winners announcement
+  - Celebration of all builders' work
+  - Networking with industry leaders and mentors
+
+MAIN HACKATHON DURATION
+Dates: July 8 - July 12, 2026 (5 days)
+Location: Ho Chi Minh City, Vietnam
+Status: Core event window (Hackathon + Demo Day)
+
+================================================================================
+2. TRACK CAPACITY & CONSTRAINTS
+================================================================================
+
+IMPORTANT: Maximum of 60 teams per track
+  - First-come, first-served registration
+  - Once a track reaches 60 teams, it closes automatically
+  - No late registrations after track closure
+
+================================================================================
+3. CONFIRMED VENUES & HOSTS
+================================================================================
+
+RMIT VIETNAM
+Date: July 8 (Hackathon Kickoff - Day 1)
+Host: RMIT Vietnam Community Partner
+Workshop Leader: Dr. Ginel Dorleon (Lecturer in Artificial Intelligence at RMIT Vietnam)
+Content: Academic frameworks and agent design methodologies
+
+AWS VIETNAM - BITEXCO TOWER
+Date: July 9 (AWS Workshop Day)
+Host: AWS Vietnam
+Lead Facilitator: Hieu Hoang (Head of Solutions Architect at AWS Vietnam)
+Content: Production-scale cloud architecture patterns, deployment playbooks, enterprise architecture
+
+================================================================================
+4. FEATURED TECH PARTNERS & WORKSHOPS
+================================================================================
+
+CONFIRMED WORKSHOPS - DAY 1 (July 8)
+===============================================
+
+Workshop 1: Render the Next Era of Creation with the BytePlus AI Stack
+Provider: BytePlus
+Time: 10:00 AM - 12:00 PM (GMT+7)
+Registration: https://bit.ly/4uAN1pT
+Duration: 2 hours
+Capacity: Limited seats
+
+Workshop 2: Inside the NVIDIA Inception Program: How Startups Build and Scale AI Globally
+Provider: NVIDIA Inception Program
+Time: 2:00 PM - 2:45 PM (GMT+7)
+Registration: https://bit.ly/43yBk80
+Duration: 45 minutes
+Focus: Startup growth and global AI scaling strategies
+
+Workshop 3: TRAE in Your Professional Workflow
+Provider: TRAE
+Time: 3:00 PM - 4:00 PM (GMT+7)
+Registration: https://bit.ly/4uy29UU
+Duration: 1 hour
+
+CONFIRMED WORKSHOPS - DAY 3 (July 10)
+===============================================
+
+Workshop 1: Build, Deploy and Monetize AI Agents: The Future of the Developer Economy
+Provider: Apify
+Time: 10:00 AM - 12:00 PM (GMT+7)
+Registration: https://bit.ly/4v6Tk5n
+Duration: 2 hours
+Focus: Agent development, deployment, and monetization strategies
+
+Workshop 2: Beyond Autocomplete: How Agentic AI Solves the Enterprise Design Bottleneck
+Provider: Google Developers
+Time: 2:00 PM - 3:00 PM (GMT+7)
+Registration: https://bit.ly/445B1Se
+Duration: 1 hour
+Focus: Enterprise design patterns and agentic AI solutions
+
+ADDITIONAL CONFIRMED TECH PARTNERS
+(Workshops to be announced)
+  - OpenAI
+  - Agora
+  - BytePlus (confirmed - see above)
+  - TRAE (confirmed - see above)
+  - Apify (confirmed - see above)
+  - Google Developers (confirmed - see above)
+  - NVIDIA (confirmed - see above)
+  - TinyFish
+
+NOTE: More workshops still to be announced. Registration fills quickly - secure seats early.
+
+================================================================================
+5. INDUSTRY MENTORS & JUDGES
+================================================================================
+
+All judges evaluate submissions for actual deployment potential and commercial viability.
+
+ZENDA NGUYEN
+Title: Group CIO, Nova Group
+Role: Problem Statement Presenter & Judge
+Expertise: Enterprise architecture, real-world deployment scenarios
+Assessment Focus: Real-world corporate budget alignment, actual deployment readiness
+
+TRUONG NGHE
+Title: IT Director & CSO, Generali Vietnam
+Role: Judge & Expert Mentor (On-site July 11)
+Track Focus: Financial Services and Insurance tracks
+Expertise: Insurance industry requirements, compliance, IT operations
+
+MICHAEL LIN
+Title: COO, Phuc Long
+Role: Mentor
+Expertise: Large-scale F&B and retail operations
+Focus: Agentic system performance requirements for enterprise F&B/retail deployment
+
+RIZWAN KHAN
+Title: Managing Partner, Acclime Vietnam
+Role: Advisor & Judge
+Expertise: Financial compliance, legal frameworks, commercial adoption barriers
+Focus: Financial, compliance, and legal hurdles; escaping "pilot purgatory" for commercial deployment
+
+TAI NGUYEN
+Title: CEO, Naiscorp Robotics
+Role: Track Mentor
+Expertise: Robotics and Physical AI in Southeast Asia
+Track Focus: Robotics & Physical AI hackathon track (Southeast Asia's first)
+
+ALEXANDER ZIEHE
+Title: VP Southeast Asia, Hettich Group
+Appearance: July 11, 2026 (Intensive Mentoring Day)
+Role: Industrial Manufacturer Representative & Mentor
+Expertise: Global industrial manufacturing deployment requirements
+Focus: Performance parameters required for deployment in industrial manufacturing sector
+
+HO MINH THANG
+Title: Vice Director of FPT.AI, FPT Smart Cloud
+Role: Workshop Facilitator & Mentor
+Expertise: Enterprise-scale agentic framework operationalization
+Workshop Topic: Operationalizing agentic frameworks at enterprise scale (Vietnam's largest tech enterprise)
+
+MASUD PARVEZ
+Title: Chairman, VSHR Pro Academy
+Role: Career Strategy Facilitator
+Focus: Professional skills development for developers deploying agentic systems; Bridging the skills gap
+
+================================================================================
+6. JUDGING CRITERIA & EVALUATION FRAMEWORK
+================================================================================
+
+JUDGES ASSESS FOR:
+  ✓ Actual deployment viability
+  ✓ Commercial adoption potential
+  ✓ Technical architecture soundness
+  ✓ Enterprise problem-solving capability
+  ✓ Real-world applicability
+  ✓ Compliance and legal feasibility
+  ✓ Performance requirements for target industry
+  ✓ Scalability potential
+
+================================================================================
+7. HACKATHON TRACKS (To Be Confirmed)
+================================================================================
+
+KNOWN TRACKS:
+  - Builder Experience Track (pre-event competition)
+  - Financial Services Track
+  - Insurance Track
+  - F&B and Retail Track
+  - Robotics & Physical AI Track (Southeast Asia's first)
+
+TRACK CAPACITY: Maximum 60 teams per track
+Status: First-come, first-served; auto-closes when full
+
+Additional tracks may be announced - check official channels.
+
+================================================================================
+8. PLATFORM PERKS & BENEFITS
+================================================================================
+
+WORKSHOP ACCESS
+  - Free attendance to all confirmed workshops
+  - Limited seats on first-come, first-served basis
+  - Register early via provided links
+  - Hands-on technical training from platform creators
+
+MENTORING OPPORTUNITIES
+  - Access to industry experts during hackathon
+  - 1-on-1 guidance on enterprise deployment
+  - Architectural deep dives (July 11)
+  - Compliance and legal advice sessions
+
+INVESTOR EXPOSURE
+  - Evaluation by industry leaders and decision-makers
+  - Real corporate problem statements
+  - Potential deployment conversations
+  - Commercial adoption pathways
+
+COMMUNITY & NETWORKING
+  - Builder community voting platform
+  - Team matching tools (Builder Experience track winners)
+  - Peer learning with other builders
+  - Connection with Vietnam's tech ecosystem
+
+DEPLOYMENT OPPORTUNITY
+  - Winning Builder Experience tools deployed live during hackathon
+  - Integration with hackathon operations
+  - Real-world usage validation
+
+================================================================================
+9. LOCATION & LOGISTICS
+================================================================================
+
+PRIMARY LOCATION: Ho Chi Minh City, Vietnam
+
+VENUE DETAILS:
+  - RMIT Vietnam (July 8)
+  - AWS Office, Bitexco Tower (July 9)
+  - Additional venues for workshops and mentoring (to be announced)
+
+TIME ZONE: GMT+7 (Vietnam Standard Time)
+Duration: July 8-12, 2026 (5 days)
+
+================================================================================
+10. HOW TO PREPARE
+================================================================================
+
+IMMEDIATE ACTIONS:
+  1. Review deadline dates and add to calendar (especially June 20, 2026)
+  2. Identify appropriate track(s) for your project
+  3. Register for workshops early via provided links
+  4. Register team for hackathon (track capacity limited)
+  5. Review judging criteria and assess deployment readiness
+
+PREPARATION RECOMMENDATIONS:
+  - Attend Buildathon Briefing Webinar (June 23, 2:00 PM GMT+7)
+  - Join relevant workshops during Build Week
+  - Prepare problem statement aligned with judge expertise
+  - Consider enterprise deployment from the start
+  - Address compliance and legal considerations early
+
+================================================================================
+11. QUICK REFERENCE - KEY TIMELINE & DATES
+================================================================================
+
+COMPLETE TIMELINE (All times GMT+7):
+
+Date              Time          Milestone                                    Action Item
+─────────────────────────────────────────────────────────────────────────────────────
+June 20, 2026     EOD           Builder Experience Track Submission          SUBMIT TODAY
+June 23, 2026     2:00 PM       Buildathon Briefing Webinar                  ATTEND & REGISTER
+June 23-29        All Day       Builder Experience Community Voting          VOTE
+July 1, 2026      Day           Builder Experience Winner Announced          MONITOR ANNOUNCEMENT
+July 1, 2026      Day           Problem Statements Released                  READ & REVIEW
+July 1, 2026      Day           Claim Your Tech/AI Platform Perks            CLAIM PERKS
+July 8-12         5 Days        MAIN HACKATHON DURATION                      BUILD
+July 8, 2026      Day           Hackathon Kickoff (Day 1) @ RMIT             ATTEND
+July 9, 2026      Day           AWS Workshop Day @ Bitexco Tower             ATTEND
+July 10, 2026     9:00 PM       Devpost Track Confirmation Deadline          CONFIRM TRACK
+July 11, 2026     Day           On-Site Building Day (Day 3)                 BUILD & MENTOR
+July 12, 2026     9:00 AM       Devpost Submission Deadline                  SUBMIT
+July 12, 2026     Day           Demo Day & Award Ceremony                    PRESENT & CELEBRATE
+
+================================================================================
+KEY CONTACTS & REGISTRATION LINKS
+================================================================================
+
+BUILDATHON BRIEFING WEBINAR
+Date: June 23, 2026, 2:00 PM GMT+7
+Status: Critical - Covers schedule, judging, track details, and announces top 20 Builder Experience tools
+
+WORKSHOP REGISTRATION LINKS:
+
+BytePlus AI Stack Workshop (July 8, 10AM-12PM)
+https://bit.ly/4uAN1pT
+
+NVIDIA Inception Program (July 8, 2PM-2:45PM)
+https://bit.ly/43yBk80
+
+TRAE Professional Workflow (July 8, 3PM-4PM)
+https://bit.ly/4uy29UU
+
+Apify Agent Deployment (July 10, 10AM-12PM)
+https://bit.ly/4v6Tk5n
+
+Google Developers Enterprise Design (July 10, 2PM-3PM)
+https://bit.ly/445B1Se
+
+SUBMISSION PLATFORM:
+Devpost - https://devpost.com (for track confirmation July 10 & submission July 12)
+
+PROBLEM STATEMENTS:
+Released: July 1, 2026
+Available: Check official AABW channels and email
+
+================================================================================
+12. IMPORTANT NOTES FOR CHATBOT QA
+================================================================================
+
+CURRENT DATE CONTEXT: June 19, 2026 (As per user context)
+
+URGENT DEADLINES - NEXT 24 HOURS:
+  ⚠ Builder Experience Track submission closes June 20, 2026 (TOMORROW)
+  
+UPCOMING CRITICAL DATES:
+  📅 June 23: Buildathon Briefing Webinar (2:00 PM GMT+7)
+  📅 July 1: Problem statements released + Perks claim window opens
+  📅 July 10, 9:00 PM: Last chance to confirm your track on Devpost
+  📅 July 12, 9:00 AM: Final submission deadline on Devpost
+  📅 July 12: Demo Day & Award Ceremony
+
+FREQUENTLY ASKED QUESTIONS (FAQ) SECTION:
+
+Q: What is the submission deadline?
+A: July 12, 2026 at 9:00 AM (GMT+7) on Devpost platform. No submissions accepted after this time.
+
+Q: When do I need to confirm my track?
+A: By July 10, 2026 at 9:00 PM (GMT+7) on Devpost. This is the final deadline to select or confirm your team's track.
+
+Q: When is Demo Day?
+A: July 12, 2026. All teams will present their projects, judges will evaluate, and winners will be announced.
+
+Q: When are the problem statements released?
+A: July 1, 2026. Problem statements and challenge details for all tracks will be released on this date.
+
+Q: Can I claim platform perks and how?
+A: Yes, starting July 1, 2026, you can claim technology and AI platform perks. Instructions will be provided in official communications.
+
+Q: What are the main tracks?
+A: Confirmed tracks include Builder Experience, Financial Services, Insurance, F&B/Retail, and Southeast Asia's first Robotics & Physical AI track. Additional tracks may be announced.
+
+Q: How many teams can join each track?
+A: Maximum 60 teams per track, first-come, first-served. Track automatically closes when full.
+
+Q: When does the hackathon happen?
+A: Hackathon runs July 8-12, 2026. Kickoff is July 8 at RMIT Vietnam. Main building days are July 8-11, with submission deadline and Demo Day on July 12.
+
+Q: Where are the workshops held?
+A: Workshops are held at multiple venues including RMIT Vietnam (July 8), AWS Bitexco Tower (July 9), and additional announced locations.
+
+Q: Are workshops free?
+A: Yes, workshops are free to attend. Seats are limited and fill quickly on first-come, first-served basis. Register via provided links.
+
+Q: Who are the judges?
+A: Judges include Group CIO Nova Group, IT Director Generali Vietnam, COO Phuc Long, Managing Partner Acclime Vietnam, CEO Naiscorp Robotics, and other industry leaders.
+
+Q: Is this only for Vietnamese companies?
+A: While hosted in Ho Chi Minh City, Vietnam, the event welcomes builders from Southeast Asia and globally.
+
+Q: What is the Builder Experience Track?
+A: A pre-event competition (submissions due June 20) to create AI tools/agents/workflows that improve the hackathon experience for builders. Winner announced July 1 and deployed during hackathon week.
+
+Q: Can I attend virtually?
+A: Buildathon Briefing Webinar is virtual (June 23, 2:00 PM). Check official channels for other virtual attendance options for workshops and demos.
+
+Q: What happens on July 11?
+A: July 11 is the On-site Building Day featuring intensive building sessions, hands-on enterprise guidance, and architectural deep dives with industry mentors.
+
+Q: What skills do I need?
+A: Experience with AI/ML development, agentic systems, and enterprise architecture preferred. Diverse skill sets welcome. Career strategy session offered on skills development.
+
+Q: Where do I submit my project?
+A: All submissions are made on the Devpost platform. Track confirmation is also done on Devpost (deadline July 10, 9:00 PM).
+
+Q: What happens if I miss the July 10 track confirmation deadline?
+A: You must confirm your track by July 10, 9:00 PM GMT+7 on Devpost. Missing this deadline may impact your team's eligibility.
+
+Q: What happens if I submit after 9:00 AM on July 12?
+A: Submissions close at 9:00 AM GMT+7 on July 12, 2026. No late submissions are accepted.
+
+Q: How long is the hackathon?
+A: 5 days total (July 8-12). Building time includes July 8-11, with final submission on July 12 morning followed by Demo Day.
+
+Q: Will there be mentoring on-site?
+A: Yes, July 11 is dedicated to on-site building with hands-on guidance from industry mentors and expert judges.
+
+Q: When will winners be announced?
+A: Winners will be announced on July 12 during the Demo Day & Award Ceremony.
+
+================================================================================
+DOCUMENT GENERATED: June 19, 2026
+LAST UPDATED: June 19, 2026 (with complete timeline)
+NEXT UPDATE: After official channel announcements
+FOR CHATBOT INTEGRATION: Use sections 1-12 for comprehensive Q&A coverage
+===============================================================================

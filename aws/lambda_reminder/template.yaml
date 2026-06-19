@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AABW Orbit deadline reminders — provisions everything in one stack:
+  the reminder Lambda (+ its execution role), the EventBridge Scheduler role that
+  invokes it, a backend IAM user/policy (boto3 CreateSchedule) and its access key.
+  Per-reminder schedules are created at runtime by the backend, not here.
+
+Parameters:
+  GmailUser:
+    Type: String
+    Default: ""
+    Description: Sender Gmail address (channel = email)
+  GmailAppPassword:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Gmail App Password (16 chars, NOT the account password)
+  TelegramBotToken:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: BotFather token (channel = telegram)
+  SupabaseUrl:
+    Type: String
+    Default: ""
+    Description: Supabase project URL
+  SupabaseServiceRoleKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Supabase service-role key
+
+Resources:
+  # The reminder Lambda. SAM auto-creates its execution role (basic CloudWatch logs).
+  ReminderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: aabw-reminder
+      CodeUri: .
+      Handler: handler.handler
+      Runtime: python3.12
+      Timeout: 30
+      Environment:
+        Variables:
+          GMAIL_USER: !Ref GmailUser
+          GMAIL_APP_PASSWORD: !Ref GmailAppPassword
+          TELEGRAM_BOT_TOKEN: !Ref TelegramBotToken
+          SUPABASE_URL: !Ref SupabaseUrl
+          SUPABASE_SERVICE_ROLE_KEY: !Ref SupabaseServiceRoleKey
+
+  # Role EventBridge Scheduler assumes to invoke the Lambda → EVENTBRIDGE_SCHEDULER_ROLE_ARN.
+  SchedulerInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: aabw-scheduler-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: invoke-reminder-lambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt ReminderFunction.Arn
+
+  # Permissions the backend (boto3) needs: create/delete schedules, invoke Lambda
+  # (immediate path), and pass the scheduler role to a schedule.
+  BackendSchedulerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: aabw-backend-scheduler
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - scheduler:CreateSchedule
+              - scheduler:DeleteSchedule
+              - scheduler:GetSchedule
+            Resource: "*"
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource: !GetAtt ReminderFunction.Arn
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource: !GetAtt SchedulerInvokeRole.Arn
+
+  BackendUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: aabw-backend
+      ManagedPolicyArns:
+        - !Ref BackendSchedulerPolicy
+
+  # Access key for the backend env. NOTE: the secret is retrievable from the stack
+  # outputs — fine for a hackathon/demo; rotate or use a role in production.
+  BackendAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref BackendUser
+
+Outputs:
+  ReminderLambdaArn:
+    Description: REMINDER_LAMBDA_ARN
+    Value: !GetAtt ReminderFunction.Arn
+  SchedulerRoleArn:
+    Description: EVENTBRIDGE_SCHEDULER_ROLE_ARN
+    Value: !GetAtt SchedulerInvokeRole.Arn
+  BackendAccessKeyId:
+    Description: AWS_ACCESS_KEY_ID for the backend
+    Value: !Ref BackendAccessKey
+  BackendSecretAccessKey:
+    Description: AWS_SECRET_ACCESS_KEY for the backend (sensitive)
+    Value: !GetAtt BackendAccessKey.SecretAccessKey

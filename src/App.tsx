@@ -56,6 +56,25 @@ interface ChatMessage {
     location: string;
     icon?: string;
   };
+  // Orbit open_reminder_form tool result — opens the pre-filled reminder form for this message.
+  reminderDraft?: {
+    title: string;
+    deadline: string;
+    fireAt: string;
+    leadMinutes: number;
+    location?: string;
+  };
+  // Confirmed, scheduled deadline reminder (after the form is submitted) → confirmation card.
+  scheduledReminder?: {
+    id: string;
+    title: string;
+    channel: string;
+    recipient: string;
+    deadline?: string;
+    fireAt: string;
+    location?: string;
+    scheduled?: boolean;
+  };
 }
 
 interface ToastMessage {
@@ -65,6 +84,17 @@ interface ToastMessage {
 }
 
 type AgentId = 'luna' | 'orbit' | 'sage';
+
+// Always render reminder times in Vietnam time (GMT+7), regardless of the user's machine.
+const fmtVN = (input: string | number | Date): string => {
+  try {
+    return new Date(input).toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'medium', timeStyle: 'short',
+    }) + ' (GMT+7)';
+  } catch {
+    return String(input);
+  }
+};
 
 // Character-Driven UI: each agent owns a full visual identity that takes over the
 // chat stage when active — colour theme, mascot, tagline, mood, bubble + button styling,
@@ -269,9 +299,12 @@ export default function App() {
     title: string;
     time: string;
     location: string;
-    channel: 'email' | 'telegram' | 'calendar';
+    channel: 'email' | 'telegram';
     recipient: string;
     msgId: string;
+    deadline: string;        // ISO — original deadline (sent to /api/reminders/schedule)
+    fireAt: string;          // ISO — preview of when it fires (deadline - lead)
+    leadMinutes: number;     // editable in the form via presets
   } | null>(null);
 
   // Active Toast list
@@ -584,6 +617,7 @@ export default function App() {
         teamMatchIds,
         perkIds,
         reminderConfig,
+        reminderDraft: data.reminderDraft || undefined,
         matches
       };
 
@@ -592,15 +626,34 @@ export default function App() {
         [activeAgent]: [...prev[activeAgent], newResponse]
       }));
 
-      // If a reminder trigger was generated, pre-fill scheduler widget immediately
-      if (reminderConfig) {
+      // Orbit opened the reminder form (function-tool) → pre-fill it with the resolved deadline.
+      if (data.reminderDraft) {
+        const d = data.reminderDraft;
+        setPendingReminder({
+          title: d.title,
+          time: fmtVN(d.fireAt),
+          location: d.location || '',
+          channel: 'email',
+          recipient: user?.email || '',
+          msgId: aiMsgId,
+          deadline: d.deadline,
+          fireAt: d.fireAt,
+          leadMinutes: d.leadMinutes ?? 60,
+        });
+        addToast(`Orbit opened the reminder form for "${d.title}"!`, 'info');
+      }
+      // Legacy [REMINDER_TRIGGER] widget (manual fallback path → immediate send).
+      else if (reminderConfig) {
         setPendingReminder({
           title: reminderConfig.title,
           time: reminderConfig.time,
           location: reminderConfig.location || 'Seminar Hall',
           channel: 'email',
           recipient: activeAgent === 'orbit' ? 'nguyenhien12t1@gmail.com' : '',
-          msgId: aiMsgId
+          msgId: aiMsgId,
+          deadline: '',
+          fireAt: '',
+          leadMinutes: 60,
         });
         addToast(`Orbit popped up Scheduler Console for "${reminderConfig.title}"!`, 'info');
       }
@@ -674,6 +727,43 @@ export default function App() {
       }
     } catch (e) {
       addToast("Successfully saved reminder locally! (Simulated dispatch success)", 'reminder');
+    } finally {
+      setPendingReminder(null);
+    }
+  };
+
+  // Schedule a future deadline reminder (Orbit form submit → real Supabase + EventBridge).
+  const scheduleReminderSave = async () => {
+    if (!pendingReminder) return;
+    const r = pendingReminder;
+    try {
+      const resp = await fetch('/api/reminders/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deadline: r.deadline,
+          channel: r.channel,
+          recipient: r.recipient,
+          leadMinutes: r.leadMinutes,
+          title: r.title,
+          location: r.location,
+          userId: user && !user.guest ? user.sub : undefined,
+        })
+      });
+      if (!resp.ok) throw new Error('Schedule endpoint failed');
+      const sched = await resp.json();
+
+      const confirmMsg: ChatMessage = {
+        id: 'sched-' + Math.random().toString(),
+        role: 'assistant',
+        content: `✅ **Reminder scheduled!** I'll ping you about **${sched.title}** via **${sched.channel}**.`,
+        timestamp: new Date(),
+        scheduledReminder: sched,
+      };
+      setChats(prev => ({ ...prev, orbit: [...prev.orbit, confirmMsg] }));
+      addToast(`Reminder scheduled via ${r.channel}! 🛰️`, 'reminder');
+    } catch (e) {
+      addToast("Saved reminder (simulated — scheduling backend unavailable).", 'reminder');
     } finally {
       setPendingReminder(null);
     }
@@ -761,17 +851,43 @@ export default function App() {
     addToast('Luna ranked your top teammates! 💜', 'success');
   };
 
-  // Convert double-asterisk to bold tags and newlines to paragraphs for chat bubble rendering
+  // Turn bare URLs in a plain string into clickable links.
+  const linkifyText = (str: string, keyBase: string) => {
+    const segments = str.split(/(https?:\/\/[^\s)]+)/g);
+    return segments.map((seg, i) => {
+      if (/^https?:\/\//.test(seg)) {
+        return (
+          <a key={`${keyBase}-u${i}`} href={seg} target="_blank" rel="noopener noreferrer"
+             className={`${theme.accentText} underline font-semibold break-all hover:opacity-80`}>
+            {seg}
+          </a>
+        );
+      }
+      return seg;
+    });
+  };
+
+  // Render a chat line with markdown bold (**bold**), markdown links [text](url),
+  // and bare URLs — all as clickable <a> tags. Newlines become block spans.
   const renderMessageContent = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, idx) => {
-      // Very clean render helper for markdown bold syntax (**bold**)
-      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      // Split on bold OR markdown-link tokens, keeping the delimiters.
+      const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
       const parsedLine = parts.map((part, pIdx) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return <strong key={pIdx} className="font-extrabold text-slate-900">{part.slice(2, -2)}</strong>;
         }
-        return part;
+        const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (link) {
+          return (
+            <a key={pIdx} href={link[2]} target="_blank" rel="noopener noreferrer"
+               className={`${theme.accentText} underline font-semibold break-all hover:opacity-80`}>
+              {link[1]}
+            </a>
+          );
+        }
+        return <React.Fragment key={pIdx}>{linkifyText(part, `${idx}-${pIdx}`)}</React.Fragment>;
       });
 
       return (
@@ -1511,8 +1627,38 @@ export default function App() {
                             </motion.div>
                           )}
 
+                          {/* Scheduled reminder confirmation (Orbit set_reminder tool result) */}
+                          {isAi && m.scheduledReminder && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-violet-50/70 border border-violet-200/50 rounded-2xl p-4 mt-2 max-w-sm w-full shadow-sm text-slate-800"
+                            >
+                              <div className="flex items-center gap-1.5 mb-2.5 text-violet-700">
+                                <Bell className="w-4 h-4 text-violet-600 shrink-0" />
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                  {m.scheduledReminder.scheduled ? 'Reminder Scheduled' : 'Reminder Saved'}
+                                </span>
+                              </div>
+                              <div className="bg-white/90 rounded-xl p-3 border border-violet-100 text-xs text-slate-700 leading-snug space-y-1">
+                                <p className="font-bold text-slate-900">{m.scheduledReminder.title}</p>
+                                <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                  <Clock className="w-3.5 h-3.5" /> Fires {fmtVN(m.scheduledReminder.fireAt)}
+                                </p>
+                                {m.scheduledReminder.location && (
+                                  <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                    <MapPin className="w-3.5 h-3.5" /> {m.scheduledReminder.location}
+                                  </p>
+                                )}
+                                <p className="text-[11px] text-violet-600 font-semibold pt-0.5">
+                                  via {m.scheduledReminder.channel} → {m.scheduledReminder.recipient}
+                                </p>
+                              </div>
+                            </motion.div>
+                          )}
+
                           {/* Interactive Reminder Setup Widget */}
-                          {isAi && m.reminderConfig && pendingReminder && pendingReminder.msgId === m.id && (
+                          {isAi && (m.reminderDraft || m.reminderConfig) && pendingReminder && pendingReminder.msgId === m.id && (
                             <motion.div
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -1526,55 +1672,75 @@ export default function App() {
                               <div className="bg-white/90 rounded-xl p-3 border border-violet-100 text-xs text-slate-700 leading-snug space-y-1">
                                 <p className="font-bold text-slate-900">{pendingReminder.title}</p>
                                 <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                                  <Clock className="w-3.5 h-3.5" /> {pendingReminder.time}
+                                  <Clock className="w-3.5 h-3.5" /> Fires {pendingReminder.time}
                                 </p>
-                                <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                                  <MapPin className="w-3.5 h-3.5" /> {pendingReminder.location}
-                                </p>
+                                {pendingReminder.location && (
+                                  <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                    <MapPin className="w-3.5 h-3.5" /> {pendingReminder.location}
+                                  </p>
+                                )}
                               </div>
+
+                              {/* Lead time (only for real deadline drafts) */}
+                              {pendingReminder.deadline && (
+                                <div className="mt-3">
+                                  <span className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 mb-1 leading-none">
+                                    Remind me before
+                                  </span>
+                                  <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                                    {[{ l: '30m', m: 30 }, { l: '1h', m: 60 }, { l: '2h', m: 120 }, { l: '1 day', m: 1440 }].map(opt => (
+                                      <button
+                                        key={opt.m}
+                                        onClick={() => setPendingReminder(prev => prev ? ({
+                                          ...prev,
+                                          leadMinutes: opt.m,
+                                          time: fmtVN(new Date(prev.deadline).getTime() - opt.m * 60000),
+                                        }) : null)}
+                                        className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                                          pendingReminder.leadMinutes === opt.m
+                                            ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                        }`}
+                                      >
+                                        {opt.l}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
                               {/* Selecting Notification Channel */}
                               <div className="mt-3">
                                 <span className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 mb-1 leading-none">
                                   Select dispatch method
                                 </span>
-                                <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+                                <div className="grid grid-cols-2 gap-1.5 mt-1.5">
                                   <button
                                     onClick={() => setPendingReminder(prev => prev ? ({ ...prev, channel: 'email' }) : null)}
                                     className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
-                                      pendingReminder.channel === 'email' 
-                                        ? 'bg-violet-600 text-white border-violet-700 shadow-sm' 
+                                      pendingReminder.channel === 'email'
+                                        ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
                                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                     }`}
                                   >
-                                    Email (SendGrid)
+                                    Email (Gmail)
                                   </button>
                                   <button
                                     onClick={() => setPendingReminder(prev => prev ? ({ ...prev, channel: 'telegram' }) : null)}
                                     className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
-                                      pendingReminder.channel === 'telegram' 
-                                        ? 'bg-violet-600 text-white border-violet-700 shadow-sm' 
+                                      pendingReminder.channel === 'telegram'
+                                        ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
                                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                     }`}
                                   >
                                     Telegram Bot
-                                  </button>
-                                  <button
-                                    onClick={() => setPendingReminder(prev => prev ? ({ ...prev, channel: 'calendar' }) : null)}
-                                    className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
-                                      pendingReminder.channel === 'calendar' 
-                                        ? 'bg-violet-600 text-white border-violet-700 shadow-sm' 
-                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    System Cal
                                   </button>
                                 </div>
                               </div>
 
                               <div className="mt-3">
                                 <label className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 leading-none">
-                                  {pendingReminder.channel === 'email' ? 'Destination Mail Address' : pendingReminder.channel === 'telegram' ? 'Telegram Chat ID / Username' : 'Local Calendar Service identifier'}
+                                  {pendingReminder.channel === 'email' ? 'Destination Mail Address' : 'Telegram Chat ID / Username'}
                                 </label>
                                 <input
                                   type="text"
@@ -1593,10 +1759,11 @@ export default function App() {
                                   Skip Alert
                                 </button>
                                 <button
-                                  onClick={dispatchReminderSave}
-                                  className="py-2 flex-1 text-center bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-md"
+                                  onClick={() => pendingReminder.deadline ? scheduleReminderSave() : dispatchReminderSave()}
+                                  disabled={!pendingReminder.recipient.trim()}
+                                  className="py-2 flex-1 text-center bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-md"
                                 >
-                                  Trigger Webhook
+                                  {pendingReminder.deadline ? 'Đặt nhắc lịch' : 'Trigger Webhook'}
                                 </button>
                               </div>
                             </motion.div>

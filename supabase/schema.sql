@@ -61,6 +61,30 @@ alter table profiles add column if not exists tech_stack         text[] default 
 alter table profiles add column if not exists idea_stage         text   default '';
 alter table profiles add column if not exists idea_description   text   default '';
 
+-- ---------------------------------------------------------------------------
+-- Reminders (Orbit) — source of truth for scheduled deadline reminders.
+-- The FastAPI set_reminder tool INSERTs a row, then creates a one-shot AWS
+-- EventBridge schedule that invokes the reminder Lambda at fire_at; the Lambda
+-- sends the email/telegram and flips status to 'sent'.
+-- ---------------------------------------------------------------------------
+create table if not exists reminders (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       text,
+  title         text not null,
+  deadline      timestamptz,            -- original deadline moment
+  fire_at       timestamptz not null,   -- when to fire (deadline - lead)
+  channel       text not null,          -- 'email' | 'telegram'
+  recipient     text not null,
+  location      text default '',
+  note          text default '',
+  status        text default 'pending', -- pending | sent | error
+  schedule_name text default '',        -- EventBridge schedule name (audit/cleanup)
+  error         text default '',
+  created_at    timestamptz default now(),
+  sent_at       timestamptz
+);
+create index if not exists reminders_user_idx on reminders(user_id);
+
 -- Ranked match: cosine similarity (1 - distance), excluding self and unembedded rows.
 -- DROP first because the RETURNS TABLE signature changed (Postgres can't REPLACE that).
 drop function if exists match_profiles(vector, int, text);
