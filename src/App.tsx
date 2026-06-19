@@ -1729,11 +1729,9 @@ export default function App() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
-                    isListening 
-                      ? "Listening voice input..." 
-                      : activeAgent === 'luna' 
-                      ? "Search participants or ask Luna..." 
-                      : activeAgent === 'orbit' 
+                    isListening
+                      ? "Listening voice input..."
+                      : activeAgent === 'orbit'
                       ? "Ask Orbit about rooms & events..."
                       : "Ask Sage about sponsor perks & credits..."
                   }
@@ -1788,38 +1786,7 @@ export default function App() {
 
               {/* Interactive Quick Prompts Helper tray */}
               <div className="flex gap-2.5 mt-2.5 flex-nowrap overflow-x-auto pb-0.5 justify-start shrink-0">
-                {activeAgent === 'luna' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={runMatch}
-                      className="text-[9.5px] font-extrabold text-white bg-gradient-to-r from-violet-500 to-pink-500 hover:brightness-105 hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm"
-                    >
-                      ✨ Find my teammates
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInputText("Find teammates who have built AI agents and shipped them.")}
-                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
-                    >
-                      🤖 Built AI agents
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInputText("Find builders who have shipped a real product before, not just demos.")}
-                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
-                    >
-                      🚀 Shipped a product
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInputText("Find teammates interested in the same hackathon track as me.")}
-                      className={`text-[9.5px] font-bold ${theme.quickBtn} hover:bg-white hover:scale-105 rounded-full px-3 py-1 cursor-pointer shrink-0 transition-all shadow-sm`}
-                    >
-                      🎯 Same track as me
-                    </button>
-                  </>
-                ) : activeAgent === 'orbit' ? (
+                {activeAgent === 'orbit' ? (
                   <>
                     <button
                       type="button"
