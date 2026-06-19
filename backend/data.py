@@ -20,26 +20,59 @@ TEAMMATES = [
      "tags": ["React Native", "Flutter", "iOS", "Android"], "bio": "Beautiful cross-platform mobile."},
 ]
 
+# Real AABW 2026 sponsor perks (from Eventinfo/perks_info.txt). There are NO per-perk promo
+# codes — every verified builder gets all perks via the same claim flow (see PERKS_CLAIM).
+# Keep these IDs in sync with src/mockData.ts PERKS (the frontend renders cards by ID).
 PERKS = [
-    {"id": "p1", "sponsor": "Google Gemini", "category": "AI Model", "title": "$50 Gemini API Credits",
-     "value": "$50", "code": "GEMINI-HACK50", "link": "https://ai.google.dev",
-     "tags": ["LLM", "Multimodal"], "description": "Free Gemini 3.5 API credits."},
-    {"id": "p2", "sponsor": "Google Cloud", "category": "Cloud Credit", "title": "$300 Cloud Credits",
-     "value": "$300", "code": "GCP300-HACK", "link": "https://cloud.google.com/free",
-     "tags": ["Cloud Run", "Hosting"], "description": "Deploy on Cloud Run, host DBs, run GPUs."},
-    {"id": "p3", "sponsor": "MongoDB Atlas", "category": "Database", "title": "$500 Atlas Credits",
-     "value": "$500", "code": "MDB-ATLAS-HACK", "link": "https://www.mongodb.com/atlas",
-     "tags": ["Vector Search", "RAG"], "description": "Managed MongoDB with vector search."},
-    {"id": "p4", "sponsor": "Vercel", "category": "Dev Tools", "title": "Pro Plan — Free 3 Months",
-     "value": "3 mo", "code": "VERCEL-PRO-3M", "link": "https://vercel.com",
-     "tags": ["Deploy", "Edge"], "description": "Edge functions + instant preview deploys."},
-    {"id": "p5", "sponsor": "ElevenLabs", "category": "Voice AI", "title": "Creator Tier — 3 Months",
-     "value": "3 mo", "code": "11LABS-HACK", "link": "https://elevenlabs.io",
-     "tags": ["Text-to-Speech", "Voice Agents"], "description": "Lifelike TTS & voice agents."},
-    {"id": "p6", "sponsor": "GitHub", "category": "Dev Tools", "title": "Copilot Pro — Free 6 Months",
-     "value": "6 mo", "code": "GH-COPILOT-6M", "link": "https://github.com/features/copilot",
-     "tags": ["Copilot", "Codespaces"], "description": "AI pair-programmer + Codespaces."},
+    {"id": "p1", "sponsor": "OpenAI", "category": "AI Model", "title": "$150 OpenAI Credits + ChatGPT Plus",
+     "value": "$150 + Plus", "link": "https://platform.openai.com",
+     "tags": ["LLM", "GPT", "ChatGPT Plus"],
+     "description": "$150 in OpenAI API credits plus 3 months of ChatGPT Plus."},
+    {"id": "p2", "sponsor": "Kimi (Moonshot AI)", "category": "AI Model", "title": "$10 Kimi Credits",
+     "value": "$10", "link": "https://platform.moonshot.ai",
+     "tags": ["Long-context", "Reasoning", "Research"],
+     "description": "$10 in Kimi credits, optimized for long-context reasoning & deep research."},
+    {"id": "p3", "sponsor": "n8n", "category": "Automation", "title": "n8n Cloud Pro Account",
+     "value": "Cloud Pro", "link": "https://n8n.io",
+     "tags": ["Workflows", "Agents", "Automation"],
+     "description": "An n8n Cloud Pro account to build & automate production-ready agentic workflows."},
+    {"id": "p4", "sponsor": "TinyFish", "category": "Web Agents", "title": "1,650 TinyFish Credits",
+     "value": "1,650 cr", "link": "https://tinyfish.io",
+     "tags": ["Web agents", "Serverless", "Automation"],
+     "description": "1,650 credits (1-month Starter Plan) for serverless web-agent infrastructure."},
+    {"id": "p5", "sponsor": "Bright Data", "category": "Web Data", "title": "$100 Bright Data Credits",
+     "value": "$100", "link": "https://brightdata.com",
+     "tags": ["Web data", "Scraping", "Real-time"],
+     "description": "$100 in API credits for real-time web intelligence & data extraction."},
+    {"id": "p6", "sponsor": "ZenRows", "category": "Web Data", "title": "ZenRows Developer Plan — 1 Month",
+     "value": "1 mo Dev", "link": "https://zenrows.com",
+     "tags": ["Scraping", "Anti-bot"],
+     "description": "1 month Developer Plan: 250K basic + 10K protected requests for web scraping."},
+    {"id": "p7", "sponsor": "Apify", "category": "Automation", "title": "$25 Apify Credits",
+     "value": "$25", "link": "https://apify.com",
+     "tags": ["Scraping", "Browser automation"],
+     "description": "$25 in platform credits for web scraping & browser automation."},
+    {"id": "p8", "sponsor": "Daytona", "category": "Dev Env", "title": "$100 Daytona Credits",
+     "value": "$100", "link": "https://daytona.io",
+     "tags": ["Dev environments", "Sandbox"],
+     "description": "$100 in credits to spin up instant, standardized development environments."},
+    {"id": "p9", "sponsor": "Agora", "category": "Voice AI", "title": "$30 Agora Credits",
+     "value": "$30", "link": "https://agora.io",
+     "tags": ["Voice", "Video", "Realtime"],
+     "description": "$30 in credits for real-time voice, video & interactive features."},
 ]
+
+# The single, unified way to unlock ALL perks (no individual codes).
+PERKS_CLAIM = (
+    "All perks are granted to verified builders via ONE flow (there are no individual promo codes):\n"
+    "1) Discord verification: run `/verify [your_luma_registration_email]` in the event Discord to "
+    "unlock your Builder role.\n"
+    "2) Register on the official Agentic AI Build Week 2026 Devpost page.\n"
+    "3) Form/join a team and LOCK your track on Devpost — organizers distribute voucher codes & "
+    "activate platform access based on the locked list.\n"
+    "Bonus: sign up on Devpost AND attend the Buildathon Briefing Webinar (June 23, 2026, 2:00 PM "
+    "GMT+7) to enter a lucky draw for up to $250 extra OpenAI credits."
+)
 
 SCHEDULE = [
     {"time": "09:00 AM", "title": "Registration & Breakfast", "location": "Main Foyer (3rd Floor)",
