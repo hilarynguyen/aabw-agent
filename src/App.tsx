@@ -63,6 +63,7 @@ interface ChatMessage {
     fireAt: string;
     leadMinutes: number;
     location?: string;
+    note?: string;
   };
   // Confirmed, scheduled deadline reminder (after the form is submitted) → confirmation card.
   scheduledReminder?: {
@@ -88,7 +89,7 @@ type AgentId = 'luna' | 'orbit' | 'sage';
 // Always render reminder times in Vietnam time (GMT+7), regardless of the user's machine.
 const fmtVN = (input: string | number | Date): string => {
   try {
-    return new Date(input).toLocaleString('vi-VN', {
+    return new Date(input).toLocaleString('en-GB', {
       timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'medium', timeStyle: 'short',
     }) + ' (GMT+7)';
   } catch {
@@ -305,7 +306,12 @@ export default function App() {
     deadline: string;        // ISO — original deadline (sent to /api/reminders/schedule)
     fireAt: string;          // ISO — preview of when it fires (deadline - lead)
     leadMinutes: number;     // editable in the form via presets
+    note: string;            // optional personal note included in the email/telegram
   } | null>(null);
+
+  // Reminder history panel (Orbit). null = closed; array = open with the loaded list.
+  const [reminderHistory, setReminderHistory] = useState<any[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Active Toast list
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -639,6 +645,7 @@ export default function App() {
           deadline: d.deadline,
           fireAt: d.fireAt,
           leadMinutes: d.leadMinutes ?? 60,
+          note: d.note || '',
         });
         addToast(`Orbit opened the reminder form for "${d.title}"!`, 'info');
       }
@@ -654,6 +661,7 @@ export default function App() {
           deadline: '',
           fireAt: '',
           leadMinutes: 60,
+          note: '',
         });
         addToast(`Orbit popped up Scheduler Console for "${reminderConfig.title}"!`, 'info');
       }
@@ -747,6 +755,7 @@ export default function App() {
           leadMinutes: r.leadMinutes,
           title: r.title,
           location: r.location,
+          note: r.note,
           userId: user && !user.guest ? user.sub : undefined,
         })
       });
@@ -766,6 +775,39 @@ export default function App() {
       addToast("Saved reminder (simulated — scheduling backend unavailable).", 'reminder');
     } finally {
       setPendingReminder(null);
+    }
+  };
+
+  // Open the reminder-history panel and load this user's reminders.
+  const loadReminderHistory = async () => {
+    if (!user || user.guest) return;
+    setHistoryLoading(true);
+    try {
+      const resp = await fetch(`/api/reminders/${encodeURIComponent(user.sub)}`);
+      const data = await resp.json();
+      setReminderHistory(data.reminders || []);
+    } catch {
+      setReminderHistory([]);
+      addToast('Could not load reminders.', 'info');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const openReminderHistory = () => {
+    setReminderHistory([]);  // open the panel immediately, then populate
+    loadReminderHistory();
+  };
+
+  // Cancel a pending reminder (deletes its EventBridge schedule + marks it cancelled).
+  const cancelReminder = async (id: string) => {
+    try {
+      const resp = await fetch(`/api/reminders/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!resp.ok) throw new Error('cancel failed');
+      addToast('Reminder cancelled.', 'reminder');
+      loadReminderHistory();
+    } catch {
+      addToast('Failed to cancel reminder.', 'info');
     }
   };
 
@@ -931,6 +973,75 @@ export default function App() {
       <div className="absolute bottom-1/4 left-8 text-white/60 animate-pulse duration-[9s] text-2xl select-none pointer-events-none">✧</div>
       <div className="absolute bottom-1/3 right-1/4 text-white/30 animate-bounce duration-[11s] text-sm select-none pointer-events-none">✦</div>
       <div className="absolute top-10 right-1/3 text-white/40 animate-pulse duration-[7s] text-xl select-none pointer-events-none">✧</div>
+
+      {/* Reminder history panel (Orbit) */}
+      <AnimatePresence>
+        {reminderHistory !== null && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm"
+            onClick={() => setReminderHistory(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[28px] shadow-2xl border border-teal-100 w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h3 className="font-display font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-teal-500" /> My reminders
+                </h3>
+                <button onClick={() => setReminderHistory(null)}
+                  className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-4 space-y-2.5">
+                {historyLoading && (
+                  <p className="text-center text-xs text-slate-400 py-8">Loading…</p>
+                )}
+                {!historyLoading && reminderHistory.length === 0 && (
+                  <p className="text-center text-xs text-slate-400 py-8">No reminders yet.</p>
+                )}
+                {!historyLoading && reminderHistory.map((r: any) => {
+                  const badge = ({
+                    pending: ['🟡', 'Pending', 'text-amber-600 bg-amber-50 border-amber-200'],
+                    sent: ['🟢', 'Sent', 'text-emerald-600 bg-emerald-50 border-emerald-200'],
+                    error: ['🔴', 'Error', 'text-rose-600 bg-rose-50 border-rose-200'],
+                    cancelled: ['⚪', 'Cancelled', 'text-slate-500 bg-slate-50 border-slate-200'],
+                  } as Record<string, string[]>)[r.status] || ['⚪', r.status, 'text-slate-500 bg-slate-50 border-slate-200'];
+                  return (
+                    <div key={r.id} className="bg-slate-50/80 border border-slate-100 rounded-2xl p-3 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-slate-900 leading-snug">{r.title}</p>
+                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge[2]}`}>
+                          {badge[0]} {badge[1]}
+                        </span>
+                      </div>
+                      <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium mt-1.5">
+                        <Clock className="w-3.5 h-3.5" /> {fmtVN(r.fire_at)}
+                      </p>
+                      <p className="text-[11px] text-teal-600 font-semibold mt-0.5">
+                        {r.channel} → {r.recipient}
+                      </p>
+                      {r.note && <p className="text-[11px] text-slate-500 mt-1 italic">“{r.note}”</p>}
+                      {r.status === 'pending' && (
+                        <button
+                          onClick={() => cancelReminder(r.id)}
+                          className="mt-2 text-[11px] font-bold text-rose-500 hover:text-rose-600 hover:underline"
+                        >
+                          Cancel reminder
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating notifications portal */}
       <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm">
@@ -1500,6 +1611,27 @@ export default function App() {
                       </p>
                     </div>
                   </div>
+                  {activeAgent === 'orbit' && !user.guest && (
+                    <button
+                      type="button"
+                      onClick={openReminderHistory}
+                      title="My reminders"
+                      className="p-2 rounded-full bg-white/70 hover:bg-white text-teal-500 hover:text-teal-600 border border-white/60 shadow-sm hover-wiggle transition-all active:scale-90"
+                    >
+                      <Bell className="w-4 h-4" />
+                    </button>
+                  )}
+                  {/* Edit profile — header shortcut for mobile (sidebar holds it on desktop). */}
+                  {(!user.guest || ALLOW_GUEST_PROFILE) && (
+                    <button
+                      type="button"
+                      onClick={openEditProfile}
+                      title="Edit profile"
+                      className="md:hidden p-2 rounded-full bg-white/70 hover:bg-white text-violet-500 hover:text-violet-600 border border-white/60 shadow-sm hover-wiggle transition-all active:scale-90 text-sm leading-none"
+                    >
+                      📝
+                    </button>
+                  )}
                   <button
                     type="button"
                     id="btn-logout"
@@ -1751,6 +1883,19 @@ export default function App() {
                                 />
                               </div>
 
+                              <div className="mt-3">
+                                <label className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 leading-none">
+                                  Note (optional)
+                                </label>
+                                <textarea
+                                  value={pendingReminder.note}
+                                  onChange={(e) => setPendingReminder(prev => prev ? ({ ...prev, note: e.target.value }) : null)}
+                                  placeholder="e.g. bring your laptop, remember to push code to Devpost…"
+                                  rows={2}
+                                  className="w-full mt-1.5 px-3 py-2 bg-white rounded-xl border border-violet-200 text-xs focus:ring-1 focus:ring-violet-400 focus:outline-none resize-none"
+                                />
+                              </div>
+
                               <div className="mt-3.5 flex gap-2">
                                 <button
                                   onClick={() => setPendingReminder(null)}
@@ -1763,7 +1908,7 @@ export default function App() {
                                   disabled={!pendingReminder.recipient.trim()}
                                   className="py-2 flex-1 text-center bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold shadow-md"
                                 >
-                                  {pendingReminder.deadline ? 'Đặt nhắc lịch' : 'Trigger Webhook'}
+                                  {pendingReminder.deadline ? 'Schedule reminder' : 'Trigger Webhook'}
                                 </button>
                               </div>
                             </motion.div>

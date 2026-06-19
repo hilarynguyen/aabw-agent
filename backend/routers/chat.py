@@ -34,7 +34,12 @@ OPEN_REMINDER_FORM_TOOL = {
                 "lead_minutes": {"type": "integer", "description": (
                     "Minutes before the deadline to fire. E.g. '2 hours before' -> 120. "
                     "Defaults to 60 if omitted.")},
-                "title": {"type": "string"},
+                "title": {"type": "string", "description": (
+                    "A short, descriptive title for the reminder (e.g. 'Nộp bài Builder "
+                    "Experience'). Avoid using the raw datetime as the title.")},
+                "note": {"type": "string", "description": (
+                    "Optional personal note/message from the user to include in the reminder "
+                    "(e.g. 'mang theo laptop', 'nhớ đẩy code lên Devpost').")},
                 "location": {"type": "string"},
             },
             "required": ["deadline"],
@@ -106,6 +111,7 @@ def _run_orbit(body: ChatIn):
         fire_at = deadline - timedelta(minutes=lead)
         title = (args.get("title") or "").strip() or f"Reminder: {args.get('deadline')}"
         location = (args.get("location") or "").strip()
+        note = (args.get("note") or "").strip()
 
         draft.update({
             "title": title,
@@ -113,6 +119,7 @@ def _run_orbit(body: ChatIn):
             "fireAt": fire_at.isoformat(),
             "leadMinutes": lead,
             "location": location,
+            "note": note,
         })
         return {"ok": True, "form_opened": True, "deadline": deadline.isoformat(),
                 "fire_at": fire_at.isoformat(), "lead_minutes": lead,

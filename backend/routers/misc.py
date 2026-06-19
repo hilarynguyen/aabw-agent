@@ -62,6 +62,7 @@ def schedule_reminder(body: ScheduleReminderIn):
     fire_at = deadline - timedelta(minutes=lead)
     title = (body.title or "").strip() or f"Reminder: {body.deadline}"
     location = (body.location or "").strip()
+    note = (body.note or "").strip()
 
     sb = get_supabase()
     if sb is None:
@@ -72,7 +73,7 @@ def schedule_reminder(body: ScheduleReminderIn):
 
     reminder_id = reminders_svc.create_reminder(
         sb, user_id=body.userId, title=title, deadline=deadline, fire_at=fire_at,
-        channel=channel, recipient=recipient, location=location)
+        channel=channel, recipient=recipient, location=location, note=note)
     schedule_name = aws_scheduler.schedule_reminder(reminder_id, fire_at)
     if schedule_name:
         try:
@@ -92,6 +93,22 @@ def list_reminders(user_id: str):
     if sb is None:
         raise HTTPException(503, "Supabase not configured.")
     return {"reminders": reminders_svc.list_reminders(sb, user_id)}
+
+
+@router.delete("/api/reminders/{reminder_id}")
+def cancel_reminder(reminder_id: str):
+    """Cancel a pending reminder: delete its EventBridge schedule + mark it cancelled."""
+    sb = get_supabase()
+    if sb is None:
+        raise HTTPException(503, "Supabase not configured.")
+    row = reminders_svc.get_reminder(sb, reminder_id)
+    if not row:
+        raise HTTPException(404, "Reminder not found.")
+    if row.get("status") != "pending":
+        raise HTTPException(400, "Only pending reminders can be cancelled.")
+    aws_scheduler.delete_schedule(row.get("schedule_name") or "")
+    reminders_svc.mark_cancelled(sb, reminder_id)
+    return {"ok": True}
 
 
 @router.post("/api/seed")
