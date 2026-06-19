@@ -13,9 +13,9 @@ interface RequirementPanelProps {
 }
 
 const EXAMPLES = [
-  'I need a Designer skilled in Figma, into AI, who ships fast and is highly committed.',
-  'Looking for a React/TypeScript developer who loves LLM agents to build a web app.',
-  'Need a Business person who can pitch + do financial modeling for FinTech.',
+  'Find a teammate experienced in building AI agents.',
+  'Find someone who has shipped real products before.',
+  'Find people interested in the same tech track as me.',
 ];
 
 // Offline fallback: turn the free text into a pseudo-profile and use the local heuristic.
