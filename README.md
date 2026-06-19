@@ -2,7 +2,7 @@
 
 # 🚀 Hackathon Companion
 
-**Your AI build-buddy for [AGENTIC AI BUILD WEEK 2026](backend/Eventinfo/agentic_ai_building_week_info.txt) — three cute, persona-driven agents that help you find teammates, never miss a deadline, and grab every sponsor perk.**
+**Your AI build-buddy for [AGENTIC AI BUILD WEEK 2026](https://luma.com/gaf-hm61?tk=5Ew00Z) — three cute, persona-driven agents that help you find teammates, never miss a deadline, and grab every sponsor perk.**
 
 Built for the **Builder Experience Track** (GenAI Fund · Ho Chi Minh City) — *"AI tools, agents, or workflows that improve the builder experience (e.g. team matching, copilots)."*
 
