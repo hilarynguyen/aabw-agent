@@ -62,6 +62,7 @@ def schedule_reminder(body: ScheduleReminderIn):
     fire_at = deadline - timedelta(minutes=lead)
     title = (body.title or "").strip() or f"Reminder: {body.deadline}"
     location = (body.location or "").strip()
+    note = (body.note or "").strip()
 
     sb = get_supabase()
     if sb is None:
@@ -72,7 +73,7 @@ def schedule_reminder(body: ScheduleReminderIn):
 
     reminder_id = reminders_svc.create_reminder(
         sb, user_id=body.userId, title=title, deadline=deadline, fire_at=fire_at,
-        channel=channel, recipient=recipient, location=location)
+        channel=channel, recipient=recipient, location=location, note=note)
     schedule_name = aws_scheduler.schedule_reminder(reminder_id, fire_at)
     if schedule_name:
         try:

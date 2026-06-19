@@ -63,6 +63,7 @@ interface ChatMessage {
     fireAt: string;
     leadMinutes: number;
     location?: string;
+    note?: string;
   };
   // Confirmed, scheduled deadline reminder (after the form is submitted) → confirmation card.
   scheduledReminder?: {
@@ -305,6 +306,7 @@ export default function App() {
     deadline: string;        // ISO — original deadline (sent to /api/reminders/schedule)
     fireAt: string;          // ISO — preview of when it fires (deadline - lead)
     leadMinutes: number;     // editable in the form via presets
+    note: string;            // optional personal note included in the email/telegram
   } | null>(null);
 
   // Active Toast list
@@ -639,6 +641,7 @@ export default function App() {
           deadline: d.deadline,
           fireAt: d.fireAt,
           leadMinutes: d.leadMinutes ?? 60,
+          note: d.note || '',
         });
         addToast(`Orbit opened the reminder form for "${d.title}"!`, 'info');
       }
@@ -654,6 +657,7 @@ export default function App() {
           deadline: '',
           fireAt: '',
           leadMinutes: 60,
+          note: '',
         });
         addToast(`Orbit popped up Scheduler Console for "${reminderConfig.title}"!`, 'info');
       }
@@ -747,6 +751,7 @@ export default function App() {
           leadMinutes: r.leadMinutes,
           title: r.title,
           location: r.location,
+          note: r.note,
           userId: user && !user.guest ? user.sub : undefined,
         })
       });
@@ -1748,6 +1753,19 @@ export default function App() {
                                   onChange={(e) => setPendingReminder(prev => prev ? ({ ...prev, recipient: e.target.value }) : null)}
                                   placeholder={pendingReminder.channel === 'email' ? 'youremail@example.com' : '@telegram_username'}
                                   className="w-full mt-1.5 px-3 py-2 bg-white rounded-xl border border-violet-200 text-xs focus:ring-1 focus:ring-violet-400 focus:outline-none"
+                                />
+                              </div>
+
+                              <div className="mt-3">
+                                <label className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 leading-none">
+                                  Ghi chú (tuỳ chọn)
+                                </label>
+                                <textarea
+                                  value={pendingReminder.note}
+                                  onChange={(e) => setPendingReminder(prev => prev ? ({ ...prev, note: e.target.value }) : null)}
+                                  placeholder="Ví dụ: mang theo laptop, nhớ đẩy code lên Devpost…"
+                                  rows={2}
+                                  className="w-full mt-1.5 px-3 py-2 bg-white rounded-xl border border-violet-200 text-xs focus:ring-1 focus:ring-violet-400 focus:outline-none resize-none"
                                 />
                               </div>
 

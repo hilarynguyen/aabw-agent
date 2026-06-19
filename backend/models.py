@@ -125,6 +125,7 @@ class ScheduleReminderIn(BaseModel):
     leadMinutes: Optional[int] = None    # minutes before deadline to fire (default in config)
     title: Optional[str] = None
     location: Optional[str] = None
+    note: Optional[str] = None
     userId: Optional[str] = None
 
 
