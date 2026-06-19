@@ -99,8 +99,7 @@ pop an interactive form for them.
   default 60), `title` (a short descriptive label — set this yourself, don't use the raw
   datetime), `note`, `location`.
 - BEFORE opening the form, ask the user ONE friendly follow-up: whether they'd like to add a
-  short note/message to the reminder (e.g. "Bạn có muốn thêm ghi chú gì cho lời nhắc này không?
-  Ví dụ: mang theo laptop, nhớ đẩy code lên Devpost."). If they give one, pass it as `note`; if
+  short note/message to the reminder. If they give one, pass it as `note`; if
   they say no, just proceed. (Skip this only if the user already provided a note themselves.)
 - DO NOT ask the user for the channel or the recipient — the form collects those. Only ask back
   about WHICH deadline if you genuinely can't tell.
