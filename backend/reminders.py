@@ -41,3 +41,13 @@ def list_reminders(sb, user_id: str) -> List[dict]:
     res = (sb.table("reminders").select("*")
            .eq("user_id", user_id).order("fire_at", desc=False).execute())
     return res.data or []
+
+
+def get_reminder(sb, reminder_id: str) -> Optional[dict]:
+    res = sb.table("reminders").select("*").eq("id", reminder_id).limit(1).execute()
+    rows = res.data or []
+    return rows[0] if rows else None
+
+
+def mark_cancelled(sb, reminder_id: str) -> None:
+    sb.table("reminders").update({"status": "cancelled"}).eq("id", reminder_id).execute()

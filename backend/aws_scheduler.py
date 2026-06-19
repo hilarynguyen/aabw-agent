@@ -103,3 +103,17 @@ def schedule_reminder(reminder_id: str, fire_at: datetime) -> Optional[str]:
         },
     )
     return name
+
+
+def delete_schedule(schedule_name: str) -> None:
+    """Delete a one-shot schedule (used when a pending reminder is cancelled).
+    No-op for the immediate-invoke marker or when AWS/boto3 isn't available."""
+    if not schedule_name or schedule_name == "immediate-invoke":
+        return
+    sched = _get_scheduler()
+    if sched is None:
+        return
+    try:
+        sched.delete_schedule(Name=schedule_name)
+    except Exception as err:  # noqa: BLE001 (already-deleted / not-found is fine)
+        print(f"[aws_scheduler] delete_schedule({schedule_name}) skipped: {err}")

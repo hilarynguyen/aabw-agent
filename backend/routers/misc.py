@@ -95,6 +95,22 @@ def list_reminders(user_id: str):
     return {"reminders": reminders_svc.list_reminders(sb, user_id)}
 
 
+@router.delete("/api/reminders/{reminder_id}")
+def cancel_reminder(reminder_id: str):
+    """Cancel a pending reminder: delete its EventBridge schedule + mark it cancelled."""
+    sb = get_supabase()
+    if sb is None:
+        raise HTTPException(503, "Supabase not configured.")
+    row = reminders_svc.get_reminder(sb, reminder_id)
+    if not row:
+        raise HTTPException(404, "Reminder not found.")
+    if row.get("status") != "pending":
+        raise HTTPException(400, "Only pending reminders can be cancelled.")
+    aws_scheduler.delete_schedule(row.get("schedule_name") or "")
+    reminders_svc.mark_cancelled(sb, reminder_id)
+    return {"ok": True}
+
+
 @router.post("/api/seed")
 def seed(force: bool = False):
     """Seed the 6+2 mock candidate profiles (with embeddings) into Supabase. No-op if already seeded."""
