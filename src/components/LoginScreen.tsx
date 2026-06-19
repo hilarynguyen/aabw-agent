@@ -42,6 +42,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         transition={{ type: 'spring', stiffness: 220, damping: 24 }}
         className="w-full max-w-md bg-white/45 backdrop-blur-2xl border border-white/60 rounded-[36px] p-7 sm:p-10 shadow-2xl relative z-10 text-center"
       >
+        {/* Host brand */}
+        <img
+          src="/genai-fund-logo.png"
+          alt="GenAI Fund"
+          className="h-7 sm:h-8 w-auto mx-auto mb-6 object-contain"
+        />
+
         {/* Overlapping agent avatars */}
         <div className="flex justify-center -space-x-3 mb-5">
           {AGENTS.map((a, i) => (

@@ -1403,14 +1403,17 @@ export default function App() {
               {/* Glass Card: Brand & Agent Switcher */}
               <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-[32px] p-5 shadow-sm relative overflow-hidden flex flex-col shrink-0">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-violet-300/10 rounded-full blur-xl pointer-events-none" />
-                
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center font-display text-white font-bold text-base shadow-md">
-                    H
-                  </div>
-                  <div>
+
+                {/* Host logo + brand, side by side */}
+                <div className="flex items-center gap-3 mb-6">
+                  <img
+                    src="/genai-fund-logo.png"
+                    alt="GenAI Fund"
+                    className="h-7 w-auto object-contain shrink-0"
+                  />
+                  <div className="border-l border-slate-200 pl-3">
                     <h2 className="font-display font-extrabold text-slate-900 text-sm tracking-tight">Hackathon</h2>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Companion App</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Companion</p>
                   </div>
                 </div>
 
