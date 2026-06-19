@@ -8,6 +8,10 @@ coverage/
 !.env.example
 .env.example
 .venv/
+# AWS SAM build artifacts + any samconfig that may hold secrets
+.aws-sam/
+aws/lambda_reminder/samconfig.toml
+aws/lambda_reminder/function.zip
 __pycache__/
 *.pyc
 *.pyd
