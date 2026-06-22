@@ -308,6 +308,8 @@ export default function App() {
     leadMinutes: number;     // editable in the form via presets
     note: string;            // optional personal note included in the email/telegram
   } | null>(null);
+  // Whether the "Remind me before" picker is in custom-minutes mode.
+  const [customLead, setCustomLead] = useState(false);
 
   // Reminder history panel (Orbit). null = closed; array = open with the loaded list.
   const [reminderHistory, setReminderHistory] = useState<any[] | null>(null);
@@ -635,6 +637,7 @@ export default function App() {
       // Orbit opened the reminder form (function-tool) → pre-fill it with the resolved deadline.
       if (data.reminderDraft) {
         const d = data.reminderDraft;
+        setCustomLead(false);
         setPendingReminder({
           title: d.title,
           time: fmtVN(d.fireAt),
@@ -1805,7 +1808,16 @@ export default function App() {
                               </div>
 
                               <div className="bg-white/90 rounded-xl p-3 border border-violet-100 text-xs text-slate-700 leading-snug space-y-1">
-                                <p className="font-bold text-slate-900">{pendingReminder.title}</p>
+                                <label className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 leading-none">
+                                  Reminder name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={pendingReminder.title}
+                                  onChange={(e) => setPendingReminder(prev => prev ? ({ ...prev, title: e.target.value }) : null)}
+                                  placeholder="e.g. Submit project on Devpost"
+                                  className="w-full mb-1 px-2.5 py-1.5 bg-white rounded-lg border border-violet-200 text-xs font-bold text-slate-900 focus:ring-1 focus:ring-violet-400 focus:outline-none"
+                                />
                                 <p className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
                                   <Clock className="w-3.5 h-3.5" /> Fires {pendingReminder.time}
                                 </p>
@@ -1822,17 +1834,20 @@ export default function App() {
                                   <span className="block text-[9.5px] uppercase tracking-wider font-extrabold text-slate-500 mb-1 leading-none">
                                     Remind me before
                                   </span>
-                                  <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                                  <div className="grid grid-cols-5 gap-1.5 mt-1.5">
                                     {[{ l: '30m', m: 30 }, { l: '1h', m: 60 }, { l: '2h', m: 120 }, { l: '1 day', m: 1440 }].map(opt => (
                                       <button
                                         key={opt.m}
-                                        onClick={() => setPendingReminder(prev => prev ? ({
-                                          ...prev,
-                                          leadMinutes: opt.m,
-                                          time: fmtVN(new Date(prev.deadline).getTime() - opt.m * 60000),
-                                        }) : null)}
+                                        onClick={() => {
+                                          setCustomLead(false);
+                                          setPendingReminder(prev => prev ? ({
+                                            ...prev,
+                                            leadMinutes: opt.m,
+                                            time: fmtVN(new Date(prev.deadline).getTime() - opt.m * 60000),
+                                          }) : null);
+                                        }}
                                         className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
-                                          pendingReminder.leadMinutes === opt.m
+                                          !customLead && pendingReminder.leadMinutes === opt.m
                                             ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
                                             : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                         }`}
@@ -1840,7 +1855,37 @@ export default function App() {
                                         {opt.l}
                                       </button>
                                     ))}
+                                    <button
+                                      onClick={() => setCustomLead(true)}
+                                      className={`py-1 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                                        customLead
+                                          ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
+                                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      Custom
+                                    </button>
                                   </div>
+                                  {customLead && (
+                                    <div className="mt-2 flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        min={1}
+                                        value={pendingReminder.leadMinutes || ''}
+                                        onChange={(e) => {
+                                          const mins = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                          setPendingReminder(prev => prev ? ({
+                                            ...prev,
+                                            leadMinutes: mins,
+                                            time: fmtVN(new Date(prev.deadline).getTime() - mins * 60000),
+                                          }) : null);
+                                        }}
+                                        placeholder="e.g. 45"
+                                        className="w-20 px-2.5 py-1.5 bg-white rounded-lg border border-violet-200 text-xs font-bold text-slate-900 focus:ring-1 focus:ring-violet-400 focus:outline-none"
+                                      />
+                                      <span className="text-[11px] text-slate-500 font-medium">minutes before</span>
+                                    </div>
+                                  )}
                                 </div>
                               )}
 
@@ -1901,7 +1946,7 @@ export default function App() {
 
                               <div className="mt-3.5 flex gap-2">
                                 <button
-                                  onClick={() => setPendingReminder(null)}
+                                  onClick={() => { setCustomLead(false); setPendingReminder(null); }}
                                   className="py-2 flex-1 text-center bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs text-slate-500 font-bold"
                                 >
                                   Skip Alert
