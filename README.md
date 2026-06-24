@@ -78,10 +78,23 @@ Three persona-driven agents, each with its own mascot, voice, and pastel/glassmo
 
 **Prerequisites:** Node.js + Python 3.11+.
 
-```bash
-# 1. Install dependencies
-npm install
-pip install -r backend/requirements.txt
+1. Install JS deps: `npm install`
+2. Install Python deps: `pip install -r backend/requirements.txt`
+3. Create `.env` in the project root:
+   - `OPENROUTER_API_KEY=...` (**chat + embeddings**, both via OpenRouter; required). Optional
+     overrides: `OPENROUTER_CHAT_MODEL` (default `nvidia/nemotron-3-super-120b-a12b:free`),
+     `EMBED_MODEL` (default `qwen/qwen3-embedding-8b`), `EMBED_DIM` (default `1024`),
+     `OPENROUTER_BASE_URL` (default `https://openrouter.ai/api/v1`).
+   - `VITE_SUPABASE_URL=...` and `VITE_SUPABASE_ANON_KEY=...` (client — enables **Supabase Auth**
+     Google sign-in; otherwise use "Continue as Guest"). The anon key is public/client-safe.
+   - `SUPABASE_URL=...` and `SUPABASE_SERVICE_ROLE_KEY=...` (server — profile storage + pgvector
+     matching; **service role key is server-only, never exposed to the client**)
+4. (Optional) In the Supabase SQL editor, run [supabase/schema.sql](supabase/schema.sql) to create
+   the `profiles` table, the HNSW cosine index, and the `match_profiles` RPC.
+5. Run both servers together: `npm run dev` (uvicorn :8000 + Vite :3000). Or separately:
+   `npm run dev:api` and `npm run dev:web`.
+6. Seed the candidate pool once: `POST http://localhost:8000/api/seed` (inserts 391 mock teammate
+   profiles with embeddings). No-op if already seeded.
 
 # 2. (Optional) add a .env in the project root — see Configuration below.
 #    With no keys, the app still runs in demo mode.
