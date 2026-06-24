@@ -34,7 +34,7 @@ View your app in AI Studio: https://ai.studio/apps/26bd7b71-7fb8-419d-bbbc-c53e5
    the `profiles` table, the HNSW cosine index, and the `match_profiles` RPC.
 5. Run both servers together: `npm run dev` (uvicorn :8000 + Vite :3000). Or separately:
    `npm run dev:api` and `npm run dev:web`.
-6. Seed the candidate pool once: `POST http://localhost:8000/api/seed` (inserts 8 mock teammate
+6. Seed the candidate pool once: `POST http://localhost:8000/api/seed` (inserts 391 mock teammate
    profiles with embeddings). No-op if already seeded.
 
 **Production:** `npm run build` (Vite → `dist/`) then `npm start` (FastAPI serves the built SPA + API).
