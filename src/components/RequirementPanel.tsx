@@ -13,8 +13,8 @@ interface RequirementPanelProps {
 }
 
 const EXAMPLES = [
-  'Find a teammate experienced in building AI agents and intend to join F&B track',
   'Find teammate join aviation track, speaking english well, can become the presenter and do business research',
+  'Find a teammate experienced in building AI agents and intend to join F&B track',
   'Find people interested in the game track as me.',
 ];
 
