@@ -13,9 +13,9 @@ interface RequirementPanelProps {
 }
 
 const EXAMPLES = [
-  'Find a teammate experienced in building AI agents.',
-  'Find someone who has shipped real products before.',
-  'Find people interested in the same tech track as me.',
+  'Find a teammate experienced in building AI agents and intend to join F&B track',
+  'Find teammate join aviation track, speaking english well, can become the presenter and do business research',
+  'Find people interested in the game track as me.',
 ];
 
 // Offline fallback: turn the free text into a pseudo-profile and use the local heuristic.
